@@ -1,0 +1,1986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Battle Tank</title>
+    <style type="text/css">
+        canvas {
+            border: 1px solid blue;
+        }
+        /* Texto blanco en la pantalla principal */
+        #start-screen, #start-screen * {
+            color: #fff !important;
+        }
+        /* Botones en la pantalla principal con texto negro */
+        #start-screen button {
+            color: #000 !important;
+        }
+    </style>
+    <script src="Prop.js"></script>
+    <script src="Bala.js"></script>
+    <script src="Tanque.js"></script>
+    <script src="Objetivo.js"></script>
+    <script src="Sprite.js"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="logic.js"></script>
+</head>
+<body>
+<div id="start-screen" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; height: 100vh; width: 100%; background: #ffffff url('Sprites/fondo.png') center center / cover no-repeat;">
+    <!-- Logo agregado (no se elimina nada existente) -->
+    <img id="start-logo" src="Sprites/Cubo.png" alt="El Cubo Dorado" 
+         style="max-width: 70vw; width: 420px; height: auto; image-rendering: pixelated; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.35));" />
+    <h1 style="margin: 0; font-family: sans-serif;">Bienvenido</h1>
+    <div style="display: flex; gap: 12px;">
+        <button id="btn-online">Online</button>
+        <button id="btn-local">Local</button>
+        <button id="btn-scores">Historial</button>
+    </div>
+    <small style="font-family: sans-serif; color: #555;">Selecciona un modo para continuar</small>
+    <noscript>Necesitas habilitar JavaScript para continuar.</noscript>
+    </div>
+
+<!-- Pantalla de modo online (demo de flujo) -->
+<div id="online-screen" style="display: none; flex-direction: column; align-items: center; justify-content: center; gap: 12px; height: 100vh; padding: 16px; box-sizing: border-box;">
+    <h2 style="margin: 0; font-family: sans-serif;">Modo Online</h2>
+    <div id="online-actions" style="display:flex; flex-direction: column; gap: 8px; width: 100%; max-width: 420px; font-family: sans-serif;">
+        <button id="btn-online-create" style="padding: 10px 16px; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer;">Crear sala</button>
+        <div style="font-size: 13px; color:#444;">¿Tienes un código de sala? Escríbelo para unirte.</div>
+        <div style="display:flex; gap: 6px;">
+            <input id="online-join-code" type="text" placeholder="Código de sala" style="flex:1; padding: 6px; border-radius: 6px; border:1px solid #ccc; font-family: monospace; font-size: 12px;" />
+            <button id="btn-online-join-start" style="padding: 6px 10px; border-radius: 6px;">Unirse</button>
+        </div>
+    </div>
+    <div id="online-share" style="display:none; flex-direction: column; gap: 6px; width: 100%; max-width: 420px; font-family: sans-serif;">
+        <label for="online-room-url" style="font-size: 13px; color:#333;">Comparte este código para invitar a otro jugador:</label>
+        <div style="display:flex; gap: 6px;">
+            <input id="online-room-url" type="text" readonly style="flex:1; padding: 6px; border-radius: 6px; border:1px solid #ccc; background:#fafafa; font-family: monospace; font-size: 12px;" />
+            <button id="online-copy-link" style="padding: 6px 10px; border-radius: 6px;">Copiar</button>
+        </div>
+    </div>
+    <div id="online-status" style="font-family: sans-serif; color:#444; font-size: 14px; text-align: center; max-width: 420px;"></div>
+    <div style="display:flex; gap:12px; margin-top: 6px;">
+        <button id="btn-join" style="display:none;">Ir al lobby</button>
+        <button id="btn-online-back" style="background: #eee;">Volver</button>
+    </div>
+</div>
+
+<!-- Pantalla de Historial de Puntuacion -->
+<div id="scores-screen" style="display:none; flex-direction: column; align-items: center; gap: 12px; height: 100vh; padding: 16px; box-sizing: border-box; font-family: sans-serif;">
+    <h2 style="margin: 6px 0;">Historial de partidas</h2>
+    <div style="width: 100%; max-width: 860px;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+            <thead>
+                <tr style="background:#eee;">
+                    <th style="text-align:left; padding:6px; border-bottom:1px solid #ccc;">Fecha</th>
+                    <th style="text-align:left; padding:6px; border-bottom:1px solid #ccc;">Modo</th>
+                    <th style="text-align:left; padding:6px; border-bottom:1px solid #ccc;">Dificultad</th>
+                    <th style="text-align:left; padding:6px; border-bottom:1px solid #ccc;">Jugadores</th>
+                    <th style="text-align:right; padding:6px; border-bottom:1px solid #ccc;">Destruidos</th>
+                    <th style="text-align:right; padding:6px; border-bottom:1px solid #ccc;">Restantes</th>
+                    <th style="text-align:left; padding:6px; border-bottom:1px solid #ccc;">Duracion</th>
+                    <th style="text-align:left; padding:6px; border-bottom:1px solid #ccc;">Resultado</th>
+                </tr>
+            </thead>
+            <tbody id="scores-tbody"></tbody>
+        </table>
+        <div id="scores-empty" style="display:none; padding: 12px; color:#555;">No hay registros guardados.</div>
+    </div>
+    <div style="display:flex; gap:8px; margin-top: 8px;">
+        <button id="btn-scores-back" style="padding: 6px 10px;">Volver</button>
+        <button id="btn-scores-clear" style="padding: 6px 10px; background:#eee;">Borrar historial</button>
+    </div>
+</div>
+
+<!-- Pantalla de selección de color del jugador -->
+<!-- Pantalla intermedia de modo local (Individual / Duo) -->
+<div id="local-mode-screen" style="display: none; flex-direction: column; align-items: center; justify-content: center; gap: 12px; height: 100vh;">
+    <h2 style="margin: 0; font-family: sans-serif;">Modo Local</h2>
+    <div id="local-options" style="display: flex; gap: 12px;">
+        <button id="btn-local-individual">Individual</button>
+        <button id="btn-local-duo">Duo</button>
+    </div>
+    <!-- Configuración Individual (misma pantalla) -->
+    <div id="individual-setup" style="display: none; flex-direction: column; align-items: center; gap: 12px; width: 100%; max-width: 520px; padding-top: 4px;">
+        <div style="border: 1px solid #ccc; border-radius: 8px; padding: 10px; width: 100%;">
+            <h3 style="margin: 0 0 6px; font-family: sans-serif;">Jugador 1</h3>
+            <label for="solo-name" style="display:block; font-family: sans-serif; font-size: 12px; color:#444;">Nombre</label>
+            <input id="solo-name" type="text" placeholder="Tu nombre" style="width: 100%; padding: 6px; margin: 4px 0 8px;" />
+            <div style="font-family: sans-serif; font-size: 12px; color:#444; margin-bottom: 4px;">Colores</div>
+            <div style="display:flex; gap:8px; flex-wrap: wrap;">
+                <button class="solo-color" data-color="#00a24a" title="Verde" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #00a24a;"></button>
+                <button class="solo-color" data-color="#e53935" title="Rojo" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #e53935;"></button>
+                <button class="solo-color" data-color="#1e88e5" title="Azul" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #1e88e5;"></button>
+                <button class="solo-color" data-color="#fdd835" title="Amarillo" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #fdd835;"></button>
+                <button class="solo-color" data-color="#8e24aa" title="Morado" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #8e24aa;"></button>
+                <button class="solo-color" data-color="#ff7043" title="Naranja" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #ff7043;"></button>
+                <button class="solo-color" data-color="#795548" title="Café" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #795548;"></button>
+            </div>
+        </div>
+        <div style="display:flex; gap:10px; margin-top: 4px;">
+            <button id="btn-solo-continue" disabled>Continuar</button>
+            <button id="btn-solo-back" style="background:#eee;">Volver</button>
+        </div>
+    </div>
+    <!-- Configuración Duo (misma pantalla) -->
+    <div id="duo-setup" style="display: none; flex-direction: column; align-items: center; gap: 12px; width: 100%; max-width: 720px; padding-top: 4px;">
+        <div style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; width: 100%;">
+            <!-- Jugador 1 -->
+            <div style="border: 1px solid #ccc; border-radius: 8px; padding: 10px; min-width: 280px;">
+                <h3 style="margin: 0 0 6px; font-family: sans-serif;">Jugador 1</h3>
+                <label for="p1-name" style="display:block; font-family: sans-serif; font-size: 12px; color:#444;">Nombre</label>
+                <input id="p1-name" type="text" placeholder="Tu nombre" style="width: 100%; padding: 6px; margin: 4px 0 8px;" />
+                <div style="font-family: sans-serif; font-size: 12px; color:#444; margin-bottom: 4px;">Colores</div>
+                <div style="display:flex; gap:8px; flex-wrap: wrap;">
+                    <button class="duo-color p1-color" data-color="#00a24a" title="Verde" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #00a24a;"></button>
+                    <button class="duo-color p1-color" data-color="#e53935" title="Rojo" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #e53935;"></button>
+                    <button class="duo-color p1-color" data-color="#1e88e5" title="Azul" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #1e88e5;"></button>
+                    <button class="duo-color p1-color" data-color="#fdd835" title="Amarillo" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #fdd835;"></button>
+                    <button class="duo-color p1-color" data-color="#8e24aa" title="Morado" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #8e24aa;"></button>
+                    <button class="duo-color p1-color" data-color="#ff7043" title="Naranja" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #ff7043;"></button>
+                    <button class="duo-color p1-color" data-color="#795548" title="Café" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #795548;"></button>
+                </div>
+            </div>
+            <!-- Jugador 2 -->
+            <div style="border: 1px solid #ccc; border-radius: 8px; padding: 10px; min-width: 280px;">
+                <h3 style="margin: 0 0 6px; font-family: sans-serif;">Jugador 2</h3>
+                <label for="p2-name" style="display:block; font-family: sans-serif; font-size: 12px; color:#444;">Nombre</label>
+                <input id="p2-name" type="text" placeholder="Tu nombre" style="width: 100%; padding: 6px; margin: 4px 0 8px;" />
+                <div style="font-family: sans-serif; font-size: 12px; color:#444; margin-bottom: 4px;">Colores</div>
+                <div style="display:flex; gap:8px; flex-wrap: wrap;">
+                    <button class="duo-color p2-color" data-color="#00a24a" title="Verde" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #00a24a;"></button>
+                    <button class="duo-color p2-color" data-color="#e53935" title="Rojo" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #e53935;"></button>
+                    <button class="duo-color p2-color" data-color="#1e88e5" title="Azul" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #1e88e5;"></button>
+                    <button class="duo-color p2-color" data-color="#fdd835" title="Amarillo" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #fdd835;"></button>
+                    <button class="duo-color p2-color" data-color="#8e24aa" title="Morado" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #8e24aa;"></button>
+                    <button class="duo-color p2-color" data-color="#ff7043" title="Naranja" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #ff7043;"></button>
+                    <button class="duo-color p2-color" data-color="#795548" title="Café" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #795548;"></button>
+                </div>
+            </div>
+        </div>
+        <div style="display:flex; gap:10px; margin-top: 4px;">
+            <button id="btn-duo-continue" disabled>Continuar</button>
+            <button id="btn-duo-back" style="background:#eee;">Volver</button>
+        </div>
+    </div>
+    <button id="btn-local-back" style="background: #eee;">Volver</button>
+</div>
+<div id="color-screen" style="display: none; flex-direction: column; align-items: center; justify-content: center; gap: 12px; height: 100vh;">
+    <h2 style="margin: 0; font-family: sans-serif;">Elige el color del jugador</h2>
+    <div id="color-options" style="display: flex; gap: 10px;">
+        <button class="color-btn" data-color="#00a24a" title="Verde" style="width: 36px; height: 36px; border-radius: 6px; border: 2px solid #333; background: #00a24a;"></button>
+        <button class="color-btn" data-color="#e53935" title="Rojo" style="width: 36px; height: 36px; border-radius: 6px; border: 2px solid #333; background: #e53935;"></button>
+        <button class="color-btn" data-color="#1e88e5" title="Azul" style="width: 36px; height: 36px; border-radius: 6px; border: 2px solid #333; background: #1e88e5;"></button>
+        <button class="color-btn" data-color="#fdd835" title="Amarillo" style="width: 36px; height: 36px; border-radius: 6px; border: 2px solid #333; background: #fdd835;"></button>
+    </div>
+    <div style="display:flex; gap:10px;">
+        <button id="btn-color-continue" disabled>Continuar</button>
+        <button id="btn-color-back" style="background: #eee;">Volver</button>
+    </div>
+</div>
+
+<!-- Barra de controles en juego -->
+<div id="game-controls" style="display:none; position: fixed; top: 10px; right: 10px; z-index: 9999; gap: 8px; padding: 6px; background: rgba(255,255,255,0.85); border: 1px solid #ccc; border-radius: 8px; font-family: sans-serif;">
+    <button id="btn-pause-toggle">Pausar</button>
+    <button id="btn-end-game" style="background:#fbe9e7; border:1px solid #ffab91;">Terminar</button>
+    <small id="gc-hint" style="color:#555; margin-left:4px;"></small>
+    <noscript>Necesitas JavaScript para usar estos controles.</noscript>
+    </div>
+
+<!-- Overlay de pausa -->
+<div id="pause-overlay" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 9998; align-items: center; justify-content: center;">
+    <div style="color:#fff; font-family:sans-serif; font-size: 32px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.65);">Pausa</div>
+</div>
+
+<!-- Pantalla de selección de colores (Online: Jugador 1 y Jugador 2) -->
+<div id="online-duo-screen" style="display: none; flex-direction: column; align-items: center; justify-content: center; gap: 12px; height: 100vh; padding: 16px; box-sizing: border-box;">
+    <h2 style="margin: 0; font-family: sans-serif;">Lobby Online</h2>
+    <small id="online-duo-note" style="font-family: sans-serif; color:#555;">Los colores no se pueden repetir</small>
+    <div id="online-connection-warning" style="display:none; font-family: sans-serif; font-size: 13px; color:#b71c1c; background: rgba(244,67,54,0.12); border: 1px solid rgba(244,67,54,0.35); padding: 8px 12px; border-radius: 8px;">Esperando la conexión del segundo jugador...</div>
+    <div id="online-connection-banner" style="display:none; font-family: sans-serif; font-size: 13px; color:#1b5e20; background: rgba(76,175,80,0.15); border: 1px solid rgba(76,175,80,0.4); padding: 8px 12px; border-radius: 8px;">Conexión establecida. Configura los datos de los jugadores y espera a que ambos estén listos.</div>
+    <div style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 720px;">
+        <!-- Jugador 1 -->
+        <div style="border: 1px solid #ccc; border-radius: 8px; padding: 10px; min-width: 260px; display:flex; flex-direction: column; gap: 8px; align-items: stretch;">
+            <div>
+                <h3 style="margin: 0 0 6px; font-family: sans-serif;">Jugador 1</h3>
+                <label for="online-p1-name" style="display:block; font-family: sans-serif; font-size: 12px; color:#444;">Nombre</label>
+                <input id="online-p1-name" type="text" placeholder="Tu nombre" style="width: 100%; padding: 6px; margin: 4px 0 8px;" />
+            </div>
+            <div>
+                <div style="font-family: sans-serif; font-size: 12px; color:#444; margin-bottom: 4px;">Colores</div>
+                <div style="display:flex; gap:8px; flex-wrap: wrap;">
+                    <button class="online-p1-color" data-color="#00a24a" title="Verde" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #00a24a;"></button>
+                    <button class="online-p1-color" data-color="#e53935" title="Rojo" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #e53935;"></button>
+                    <button class="online-p1-color" data-color="#1e88e5" title="Azul" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #1e88e5;"></button>
+                    <button class="online-p1-color" data-color="#fdd835" title="Amarillo" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #fdd835;"></button>
+                    <button class="online-p1-color" data-color="#8e24aa" title="Morado" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #8e24aa;"></button>
+                    <button class="online-p1-color" data-color="#ff7043" title="Naranja" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #ff7043;"></button>
+                    <button class="online-p1-color" data-color="#795548" title="Café" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #795548;"></button>
+                </div>
+            </div>
+            <button id="online-p1-ready" class="online-ready-btn" data-player="p1" style="padding: 6px 10px; border-radius: 6px; border: none; background: #d32f2f; color:#fff; font-weight: bold; cursor: pointer;">No listo</button>
+        </div>
+        <!-- Jugador 2 -->
+        <div style="border: 1px solid #ccc; border-radius: 8px; padding: 10px; min-width: 260px; display:flex; flex-direction: column; gap: 8px; align-items: stretch;">
+            <div>
+                <h3 style="margin: 0 0 6px; font-family: sans-serif;">Jugador 2</h3>
+                <label for="online-p2-name" style="display:block; font-family: sans-serif; font-size: 12px; color:#444;">Nombre</label>
+                <input id="online-p2-name" type="text" placeholder="Tu nombre" style="width: 100%; padding: 6px; margin: 4px 0 8px;" />
+            </div>
+            <div>
+                <div style="font-family: sans-serif; font-size: 12px; color:#444; margin-bottom: 4px;">Colores</div>
+                <div style="display:flex; gap:8px; flex-wrap: wrap;">
+                    <button class="online-p2-color" data-color="#00a24a" title="Verde" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #00a24a;"></button>
+                    <button class="online-p2-color" data-color="#e53935" title="Rojo" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #e53935;"></button>
+                    <button class="online-p2-color" data-color="#1e88e5" title="Azul" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #1e88e5;"></button>
+                    <button class="online-p2-color" data-color="#fdd835" title="Amarillo" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #fdd835;"></button>
+                    <button class="online-p2-color" data-color="#8e24aa" title="Morado" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #8e24aa;"></button>
+                    <button class="online-p2-color" data-color="#ff7043" title="Naranja" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #ff7043;"></button>
+                    <button class="online-p2-color" data-color="#795548" title="Café" style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid #333; background: #795548;"></button>
+                </div>
+            </div>
+            <button id="online-p2-ready" class="online-ready-btn" data-player="p2" style="padding: 6px 10px; border-radius: 6px; border: none; background: #d32f2f; color:#fff; font-weight: bold; cursor: pointer;">No listo</button>
+        </div>
+    </div>
+    <div style="display:flex; flex-wrap: wrap; gap:10px; margin-top: 12px; align-items: center; justify-content: center; font-family: sans-serif;">
+        <div style="display:flex; align-items: center; gap: 6px;">
+            <label for="online-difficulty" style="font-size: 12px; color:#333;">Dificultad</label>
+            <select id="online-difficulty" style="padding: 6px; border-radius: 6px; border: 1px solid #bbb;">
+                <option value="recluta">Fácil</option>
+                <option value="soldado">Intermedio</option>
+                <option value="comandante">Difícil</option>
+                <option value="legendario">Pesadilla</option>
+            </select>
+        </div>
+        <button id="btn-online-play" disabled style="padding: 8px 16px; border-radius: 6px; background: #1b5e20; color:#fff; border:none; font-weight: bold; cursor: pointer;">Jugar</button>
+        <button id="btn-online-duo-back" style="background:#eee;">Volver</button>
+    </div>
+    <small id="online-ready-hint" style="font-family: sans-serif; color:#777;">Ambos jugadores deben elegir nombre, un color distinto y marcarse como listos.</small>
+</div>
+
+<!-- Pantalla de derrota (Has perdido) -->
+<div id="lose-screen" style="display: none; flex-direction: column; align-items: center; justify-content: center; gap: 12px; height: 100vh;">
+    <h2 style="margin: 0; font-family: sans-serif; color:#b71c1c;">Has perdido</h2>
+    <button id="btn-lose-home">Volver a jugar</button>
+    <small style="font-family: sans-serif; color: #555;">Te llevamos a la pantalla principal</small>
+    <noscript>Necesitas habilitar JavaScript para continuar.</noscript>
+    </div>
+
+<!-- Pantalla de victoria (Has ganado) -->
+<div id="win-screen" style="display: none; flex-direction: column; align-items: center; justify-content: center; gap: 12px; height: 100vh;">
+    <h2 style="margin: 0; font-family: sans-serif; color:#1b5e20;">¡Has ganado!</h2>
+    <div id="win-details" style="font-family: sans-serif; color:#333; text-align: left;"></div>
+    <button id="btn-win-levels">Volver a niveles</button>
+    <noscript>Necesitas habilitar JavaScript para continuar.</noscript>
+    </div>
+
+<div id="difficulty-screen" style="display: none; flex-direction: column; align-items: center; gap: 16px; padding: 16px;">
+    <h2 style="margin: 0; font-family: sans-serif;">Selecciona la dificultad</h2>
+    <div id="difficulty-options" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; width: 100%; max-width: 520px;">
+        <button class="difficulty-btn" data-difficulty="recluta" style="padding: 12px; border-radius: 8px; border: 2px solid #2e7d32; background: rgba(76, 175, 80, 0.15); font-family: sans-serif; display: flex; flex-direction: column; gap: 6px;">
+            <strong style="font-size: 18px;">Fácil</strong>
+            <span style="font-size: 12px; color: #2e7d32;">Ideal para familiarizarte con los controles.</span>
+        </button>
+        <button class="difficulty-btn" data-difficulty="soldado" style="padding: 12px; border-radius: 8px; border: 2px solid #1565c0; background: rgba(21, 101, 192, 0.15); font-family: sans-serif; display: flex; flex-direction: column; gap: 6px;">
+            <strong style="font-size: 18px;">Intermedio</strong>
+            <span style="font-size: 12px; color: #1565c0;">Enfrenta una resistencia equilibrada.</span>
+        </button>
+        <button class="difficulty-btn" data-difficulty="comandante" style="padding: 12px; border-radius: 8px; border: 2px solid #ef6c00; background: rgba(239, 108, 0, 0.15); font-family: sans-serif; display: flex; flex-direction: column; gap: 6px;">
+            <strong style="font-size: 18px;">Difícil</strong>
+            <span style="font-size: 12px; color: #ef6c00;">Los enemigos no darán tregua.</span>
+        </button>
+        <div style="grid-column: 1 / -1; display: flex; justify-content: center;">
+            <button class="difficulty-btn" data-difficulty="legendario" style="padding: 12px; border-radius: 8px; border: 2px solid #b71c1c; background: rgba(183, 28, 28, 0.15); font-family: sans-serif; display: flex; flex-direction: column; gap: 6px; min-width: 160px;">
+                <strong style="font-size: 18px; text-align: center;">Pesadilla</strong>
+                <span style="font-size: 12px; color: #b71c1c; text-align: center;">Exclusivo cooperativo: exige daño combinado.</span>
+            </button>
+        </div>
+    </div>
+    <div style="margin-top: 8px;">
+        <button id="btn-volver" style="background: #eee;">Volver</button>
+    </div>
+    </div>
+
+<script>
+    (function () {
+        const start = document.getElementById('start-screen');
+        const difficulty = document.getElementById('difficulty-screen');
+        const btnLocal = document.getElementById('btn-local');
+        const btnVolver = document.getElementById('btn-volver');
+        if (btnVolver) {
+            btnVolver.addEventListener('click', function () {
+                // Volver a la pantalla inicial
+                if (difficulty) difficulty.style.display = 'none';
+                start.style.display = 'flex';
+                // Cerrar pestaña externa del jugador 2 si existe
+                try {
+                    if (window.myGameArea && window.myGameArea.viewerWin && !window.myGameArea.viewerWin.closed) {
+                        window.myGameArea.viewerWin.close();
+                        window.myGameArea.viewerWin = null;
+                        window.myGameArea.viewerCanvas = null;
+                        window.myGameArea.viewerCtx = null;
+                    }
+                    if (typeof window.hideGameControls === 'function') window.hideGameControls();
+                    // Limpiar nombres de Online
+                    const n1 = document.getElementById('online-p1-name');
+                    const n2 = document.getElementById('online-p2-name');
+                    if (n1) n1.value = '';
+                    if (n2) n2.value = '';
+                } catch (e) {}
+            });
+        }
+    })();
+    </script>
+<script>
+    (function () {
+        const buttons = document.querySelectorAll('.difficulty-btn');
+        if (!buttons || !buttons.length) return;
+        buttons.forEach(btn => {
+            btn.addEventListener('click', function () {
+                const difficulty = this.dataset.difficulty;
+                const runner = (typeof window !== 'undefined' && window.startGame) ? window.startGame : (typeof startGame === 'function' ? startGame : null);
+                if (difficulty && typeof runner === 'function') {
+                    runner(difficulty);
+                }
+            });
+        });
+    })();
+    </script>
+<script>
+// Lógica adicional para modo Local (Individual / Duo)
+(function () {
+    const start = document.getElementById('start-screen');
+    const difficulty = document.getElementById('difficulty-screen');
+    const localMode = document.getElementById('local-mode-screen');
+    const btnLocal = document.getElementById('btn-local');
+    const btnLocalIndividual = document.getElementById('btn-local-individual');
+    const btnLocalDuo = document.getElementById('btn-local-duo');
+    const btnLocalBack = document.getElementById('btn-local-back');
+    const localOptions = document.getElementById('local-options');
+    const duoSetup = document.getElementById('duo-setup');
+    const individualSetup = document.getElementById('individual-setup');
+    const soloName = document.getElementById('solo-name');
+    const soloColorButtons = document.querySelectorAll('.solo-color');
+    const btnSoloContinue = document.getElementById('btn-solo-continue');
+    const btnSoloBack = document.getElementById('btn-solo-back');
+    const p1Name = document.getElementById('p1-name');
+    const p2Name = document.getElementById('p2-name');
+    const p1ColorButtons = document.querySelectorAll('.p1-color');
+    const p2ColorButtons = document.querySelectorAll('.p2-color');
+    const btnDuoContinue = document.getElementById('btn-duo-continue');
+    const btnDuoBack = document.getElementById('btn-duo-back');
+
+    let p1Color = null;
+    let p2Color = null;
+    let soloColor = null;
+
+    if (btnLocal) {
+        // Se agrega un listener adicional. El anterior muestra niveles;
+        // este luego oculta niveles y muestra la pantalla de modo local.
+        btnLocal.addEventListener('click', function () {
+            if (localMode) {
+                if (difficulty) difficulty.style.display = 'none';
+                if (start) start.style.display = 'none';
+                localMode.style.display = 'flex';
+            }
+        });
+    }
+    if (btnLocalIndividual) {
+        btnLocalIndividual.addEventListener('click', function () {
+            window.localMode = 'individual';
+        });
+    }
+    if (btnLocalDuo) {
+        // Listener existente deja niveles visibles; este reorienta al setup Duo
+        btnLocalDuo.addEventListener('click', function () {
+            if (difficulty) difficulty.style.display = 'none';
+            if (localMode) localMode.style.display = 'flex';
+            if (localOptions) localOptions.style.display = 'none';
+            if (duoSetup) duoSetup.style.display = 'flex';
+        });
+    }
+    if (btnLocalIndividual) {
+        // Agregar listener adicional para mostrar setup Individual
+        btnLocalIndividual.addEventListener('click', function () {
+            if (difficulty) difficulty.style.display = 'none';
+            if (localMode) localMode.style.display = 'flex';
+            if (localOptions) localOptions.style.display = 'none';
+            if (individualSetup) individualSetup.style.display = 'flex';
+        });
+    }
+    if (btnLocalBack) {
+        btnLocalBack.addEventListener('click', function () {
+            if (localMode) localMode.style.display = 'none';
+            start.style.display = 'flex';
+        });
+    }
+
+    function clearOutlines(buttons) {
+        buttons.forEach(b => b.style.outline = 'none');
+    }
+    function setOutline(btn) {
+        btn.style.outline = '3px solid #000';
+    }
+    function updateDisabledColors() {
+        // Deshabilita el color elegido por el otro jugador
+        if (p1ColorButtons && p2ColorButtons) {
+            p2ColorButtons.forEach(b => {
+                b.disabled = (p1Color && b.dataset.color === p1Color);
+                b.style.opacity = b.disabled ? '0.5' : '1';
+            });
+            p1ColorButtons.forEach(b => {
+                b.disabled = (p2Color && b.dataset.color === p2Color);
+                b.style.opacity = b.disabled ? '0.5' : '1';
+            });
+        }
+    }
+    function updateContinue() {
+        const ok = p1Name && p1Name.value.trim() && p2Name && p2Name.value.trim() && p1Color && p2Color && p1Color !== p2Color;
+        if (btnDuoContinue) btnDuoContinue.disabled = !ok;
+    }
+
+    if (p1ColorButtons && p1ColorButtons.length) {
+        p1ColorButtons.forEach(btn => {
+            btn.addEventListener('click', function () {
+                p1Color = this.dataset.color;
+                clearOutlines(p1ColorButtons);
+                setOutline(this);
+                if (p2Color === p1Color) {
+                    // si coincidía, limpiar selección del jugador 2
+                    clearOutlines(p2ColorButtons);
+                    p2Color = null;
+                }
+                updateDisabledColors();
+                updateContinue();
+            });
+        });
+    }
+    if (p2ColorButtons && p2ColorButtons.length) {
+        p2ColorButtons.forEach(btn => {
+            btn.addEventListener('click', function () {
+                p2Color = this.dataset.color;
+                clearOutlines(p2ColorButtons);
+                setOutline(this);
+                if (p1Color === p2Color) {
+                    clearOutlines(p1ColorButtons);
+                    p1Color = null;
+                }
+                updateDisabledColors();
+                updateContinue();
+            });
+        });
+    }
+    if (p1Name) p1Name.addEventListener('input', updateContinue);
+    if (p2Name) p2Name.addEventListener('input', updateContinue);
+
+    if (btnDuoBack) {
+        btnDuoBack.addEventListener('click', function () {
+            if (duoSetup) duoSetup.style.display = 'none';
+            if (localOptions) localOptions.style.display = 'flex';
+        });
+    }
+    if (btnDuoContinue) {
+        btnDuoContinue.addEventListener('click', function () {
+            if (btnDuoContinue.disabled) return;
+            window.localMode = 'duo';
+            window.player1 = { name: (p1Name?.value || '').trim(), color: p1Color };
+            window.player2 = { name: (p2Name?.value || '').trim(), color: p2Color };
+            // En modo Duo no se aplica tinte global al jugador único
+            try { delete window.playerTint; } catch (e) { window.playerTint = null; }
+            if (duoSetup) duoSetup.style.display = 'none';
+            if (localMode) localMode.style.display = 'none';
+            if (difficulty) difficulty.style.display = 'flex';
+        });
+    }
+
+    // Lógica Individual
+    function updateSoloContinue() {
+        const ok = soloName && soloName.value.trim() && soloColor;
+        if (btnSoloContinue) btnSoloContinue.disabled = !ok;
+    }
+    if (soloColorButtons && soloColorButtons.length) {
+        soloColorButtons.forEach(btn => {
+            btn.addEventListener('click', function () {
+                soloColor = this.dataset.color;
+                clearOutlines(soloColorButtons);
+                setOutline(this);
+                updateSoloContinue();
+            });
+        });
+    }
+    if (soloName) soloName.addEventListener('input', updateSoloContinue);
+    if (btnSoloBack) {
+        btnSoloBack.addEventListener('click', function () {
+            if (individualSetup) individualSetup.style.display = 'none';
+            if (localOptions) localOptions.style.display = 'flex';
+        });
+    }
+    if (btnSoloContinue) {
+        btnSoloContinue.addEventListener('click', function () {
+            if (btnSoloContinue.disabled) return;
+            window.localMode = 'individual';
+            window.player1 = { name: (soloName?.value || '').trim(), color: soloColor };
+            // Aplicar color al tanque del jugador en modo Individual
+            window.playerTint = soloColor;
+            if (individualSetup) individualSetup.style.display = 'none';
+            if (localMode) localMode.style.display = 'none';
+            if (difficulty) difficulty.style.display = 'flex';
+        });
+    }
+})();
+</script>
+<script>
+// Historial: lectura y navegacion
+(function(){
+    const KEY = 'TANK1990_SCORE_HISTORY';
+    const start = document.getElementById('start-screen');
+    const scores = document.getElementById('scores-screen');
+    const btnScores = document.getElementById('btn-scores');
+    const btnBack = document.getElementById('btn-scores-back');
+    const btnClear = document.getElementById('btn-scores-clear');
+    const tbody = document.getElementById('scores-tbody');
+    const empty = document.getElementById('scores-empty');
+
+    function humanTime(sec){
+        if (typeof sec !== 'number' || sec < 0) return '-';
+        const m = Math.floor(sec/60); const s = sec%60; const d2 = (n)=> (n<10?'0'+n:''+n); return d2(m)+":"+d2(s);
+    }
+    function safeText(v){ return (v===undefined||v===null)?'':String(v); }
+    function joinPlayers(p){ if(!p) return ''; return [p.p1,p.p2].filter(Boolean).join(' & '); }
+    function labelMode(m){ return ({'online':'Online','local-duo':'Local Duo','local-individual':'Local','solo':'Solo'})[m] || (m||'-'); }
+    function labelResult(v){ return v? 'Victoria' : 'Derrota'; }
+    function labelDate(iso){ try{ const d=new Date(iso); return d.toLocaleString(); }catch(e){ return iso||''; } }
+
+    function render(){
+        if (!tbody) return;
+        const rows = JSON.parse(localStorage.getItem(KEY) || '[]');
+        tbody.innerHTML='';
+        if (!rows.length){ if(empty) empty.style.display='block'; return; }
+        if (empty) empty.style.display='none';
+        rows.forEach(r=>{
+            const tr = document.createElement('tr');
+            tr.innerHTML = '<td style="padding:6px; border-bottom:1px solid #eee;">'+labelDate(r.at)+'</td>'+
+                           '<td style="padding:6px; border-bottom:1px solid #eee;">'+labelMode(r.mode)+'</td>'+
+                           '<td style="padding:6px; border-bottom:1px solid #eee;">'+safeText(r.difficulty||'-')+'</td>'+
+                           '<td style="padding:6px; border-bottom:1px solid #eee;">'+safeText(joinPlayers(r.players))+'</td>'+
+                           '<td style="padding:6px; text-align:right; border-bottom:1px solid #eee;">'+(r.enemiesDestroyed||0)+'</td>'+
+                           '<td style="padding:6px; text-align:right; border-bottom:1px solid #eee;">'+(r.enemiesRemaining||0)+'</td>'+
+                           '<td style="padding:6px; border-bottom:1px solid #eee;">'+humanTime(r.durationSec)+'</td>'+
+                           '<td style="padding:6px; border-bottom:1px solid #eee;">'+labelResult(r.victory)+'</td>';
+            tbody.appendChild(tr);
+        });
+    }
+
+    if (btnScores) btnScores.addEventListener('click', function(){ if(start) start.style.display='none'; if(scores) { scores.style.display='flex'; render(); } });
+    if (btnBack) btnBack.addEventListener('click', function(){ if(scores) scores.style.display='none'; if(start) start.style.display='flex'; });
+    if (btnClear) btnClear.addEventListener('click', function(){ if(confirm('Borrar historial de partidas?')){ localStorage.removeItem(KEY); render(); if(empty) empty.style.display='block'; } });
+})();
+</script>
+<script>
+// Pantalla de derrota: volver al inicio
+(function(){
+    const btnLoseHome = document.getElementById('btn-lose-home');
+    const lose = document.getElementById('lose-screen');
+    const start = document.getElementById('start-screen');
+    const difficulty = document.getElementById('difficulty-screen');
+    if (btnLoseHome) {
+        btnLoseHome.addEventListener('click', function(){
+            const onlineContext = (typeof window !== 'undefined' && window.__onlineLastMatch && window.__onlineLastMatch.mode === 'online' && window.onlinePlayers && window.onlinePlayers.p1 && window.onlinePlayers.p2);
+            if (lose) lose.style.display = 'none';
+            if (onlineContext) {
+                try {
+                    if (typeof window.returnToOnlineLobby === 'function') {
+                        window.returnToOnlineLobby();
+                    }
+                } catch (e) {}
+                return;
+            }
+            if (start) start.style.display = 'none';
+            if (difficulty) difficulty.style.display = 'flex';
+            // En modo online, ocultar pestañas y canvases residuales
+            try {
+                // Limpiar nombres de Online
+                const n1 = document.getElementById('online-p1-name');
+                const n2 = document.getElementById('online-p2-name');
+                if (n1) n1.value = '';
+                if (n2) n2.value = '';
+                const tabs = document.getElementById('online-tabs-bar');
+                if (tabs) tabs.style.display = 'none';
+                if (window.myGameArea && window.myGameArea.canvas) window.myGameArea.canvas.style.display = 'none';
+                if (window.myGameArea && window.myGameArea.canvasMirror) window.myGameArea.canvasMirror.style.display = 'none';
+                ['online-screen','online-duo-screen','color-screen','local-mode-screen'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = 'none';
+                });
+                if (window.myGameArea && window.myGameArea.viewerWin && !window.myGameArea.viewerWin.closed) {
+                    window.myGameArea.viewerWin.close();
+                    window.myGameArea.viewerWin = null;
+                    window.myGameArea.viewerCanvas = null;
+                    window.myGameArea.viewerCtx = null;
+                }
+                if (typeof window.hideGameControls === 'function') window.hideGameControls();
+            } catch (e) {}
+        });
+    }
+})();
+</script>
+<script>
+// Pantalla de victoria: regresar a niveles
+(function(){
+    const btnWinLevels = document.getElementById('btn-win-levels');
+    const win = document.getElementById('win-screen');
+    const difficulty = document.getElementById('difficulty-screen');
+    const start = document.getElementById('start-screen');
+    if (btnWinLevels) {
+        btnWinLevels.addEventListener('click', function(){
+            const onlineContext = (typeof window !== 'undefined' && window.__onlineLastMatch && window.__onlineLastMatch.mode === 'online' && window.onlinePlayers && window.onlinePlayers.p1 && window.onlinePlayers.p2);
+            if (win) win.style.display = 'none';
+            if (onlineContext) {
+                try {
+                    if (typeof window.returnToOnlineLobby === 'function') {
+                        window.returnToOnlineLobby();
+                    }
+                } catch (e) {}
+                return;
+            }
+            if (start) start.style.display = 'none';
+            if (difficulty) difficulty.style.display = 'flex';
+            // En modo online, ocultar pestañas y canvases residuales
+            try {
+                // Limpiar nombres de Online
+                const n1 = document.getElementById('online-p1-name');
+                const n2 = document.getElementById('online-p2-name');
+                if (n1) n1.value = '';
+                if (n2) n2.value = '';
+                const tabs = document.getElementById('online-tabs-bar');
+                if (tabs) tabs.style.display = 'none';
+                if (window.myGameArea && window.myGameArea.canvas) window.myGameArea.canvas.style.display = 'none';
+                if (window.myGameArea && window.myGameArea.canvasMirror) window.myGameArea.canvasMirror.style.display = 'none';
+                ['online-screen','online-duo-screen','color-screen','local-mode-screen'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = 'none';
+                });
+                if (window.myGameArea && window.myGameArea.viewerWin && !window.myGameArea.viewerWin.closed) {
+                    window.myGameArea.viewerWin.close();
+                    window.myGameArea.viewerWin = null;
+                    window.myGameArea.viewerCanvas = null;
+                    window.myGameArea.viewerCtx = null;
+                }
+                if (typeof window.hideGameControls === 'function') window.hideGameControls();
+            } catch (e) {}
+        });
+    }
+})();
+</script>
+<script>
+// Modo Online real con PeerJS
+(function(){
+    const PeerClass = (typeof window !== 'undefined') ? window.Peer : null;
+    const btnOnline = document.getElementById('btn-online');
+    const startScreen = document.getElementById('start-screen');
+    const onlineScreen = document.getElementById('online-screen');
+    const lobbyScreen = document.getElementById('online-duo-screen');
+    const difficultyScreen = document.getElementById('difficulty-screen');
+    const btnBackOnline = document.getElementById('btn-online-back');
+    const btnBackLobby = document.getElementById('btn-online-duo-back');
+    const btnPlay = document.getElementById('btn-online-play');
+    const onlineActions = document.getElementById('online-actions');
+    const btnOnlineCreate = document.getElementById('btn-online-create');
+    const joinCodeInput = document.getElementById('online-join-code');
+    const btnOnlineJoinStart = document.getElementById('btn-online-join-start');
+    const shareBox = document.getElementById('online-share');
+    const shareInput = document.getElementById('online-room-url');
+    const copyLinkBtn = document.getElementById('online-copy-link');
+    const statusLabel = document.getElementById('online-status');
+    const joinBtn = document.getElementById('btn-join');
+    const readyHint = document.getElementById('online-ready-hint');
+    const connectionBanner = document.getElementById('online-connection-banner');
+    const connectionWarning = document.getElementById('online-connection-warning');
+    const difficultySelect = document.getElementById('online-difficulty');
+    const readyButtons = {
+        p1: document.getElementById('online-p1-ready'),
+        p2: document.getElementById('online-p2-ready')
+    };
+    const nameInputs = {
+        p1: document.getElementById('online-p1-name'),
+        p2: document.getElementById('online-p2-name')
+    };
+    const colorButtons = {
+        p1: Array.prototype.slice.call(document.querySelectorAll('.online-p1-color')),
+        p2: Array.prototype.slice.call(document.querySelectorAll('.online-p2-color'))
+    };
+
+    const ONLINE_KEYS = [37, 38, 39, 40, 32];
+    const ONLINE_KEY_MAP = {
+        37: 65,
+        38: 87,
+        39: 68,
+        40: 83,
+        32: 70
+    };
+
+    const state = {
+        role: null,
+        roomId: null,
+        hostPeerId: null,
+        peer: null,
+        conn: null,
+        connected: false,
+        players: {
+            p1: { name: '', color: null },
+            p2: { name: '', color: null }
+        },
+        ready: { p1: false, p2: false },
+        difficulty: 'recluta',
+        frameTimer: null,
+        frameBuffer: null,
+        lastFrameSignature: null,
+        lastFrameSentAt: 0,
+        suppressUI: false,
+        inGame: false,
+        viewer: null
+    };
+
+    function clonePlayers(players) {
+        const safe = { p1: { name: '', color: null }, p2: { name: '', color: null } };
+        if (!players) return safe;
+        ['p1', 'p2'].forEach(key => {
+            const source = players[key] || {};
+            safe[key] = {
+                name: typeof source.name === 'string' ? source.name : '',
+                color: source.color || null
+            };
+        });
+        return safe;
+    }
+
+    function ensureOnlineResultContext() {
+        if (typeof window === 'undefined') return null;
+        const basePlayers = clonePlayers(window.onlinePlayers || state.players);
+        if (!window.__onlineLastMatch || window.__onlineLastMatch.mode !== 'online') {
+            window.__onlineLastMatch = {
+                mode: 'online',
+                players: basePlayers,
+                victory: null,
+                completed: false,
+                difficulty: state.difficulty || 'recluta'
+            };
+        } else {
+            if (!window.__onlineLastMatch.players) {
+                window.__onlineLastMatch.players = basePlayers;
+            }
+            if (!('difficulty' in window.__onlineLastMatch)) {
+                window.__onlineLastMatch.difficulty = state.difficulty || 'recluta';
+            }
+        }
+        return window.__onlineLastMatch;
+    }
+
+    function resetReadyFlags() {
+        state.ready.p1 = false;
+        state.ready.p2 = false;
+    }
+
+    function restoreResultMessages() {
+        const winTitle = document.querySelector('#win-screen h2');
+        if (winTitle && winTitle.dataset.defaultText) {
+            winTitle.textContent = winTitle.dataset.defaultText;
+        }
+        const loseTitle = document.querySelector('#lose-screen h2');
+        if (loseTitle && loseTitle.dataset.defaultText) {
+            loseTitle.textContent = loseTitle.dataset.defaultText;
+        }
+        const loseHint = document.querySelector('#lose-screen small');
+        if (loseHint && loseHint.dataset.defaultText) {
+            loseHint.textContent = loseHint.dataset.defaultText;
+        }
+    }
+
+    function composePairLabel(players) {
+        const p1Name = (players && players.p1 && players.p1.name && players.p1.name.trim()) ? players.p1.name.trim() : '';
+        const p2Name = (players && players.p2 && players.p2.name && players.p2.name.trim()) ? players.p2.name.trim() : '';
+        const names = [];
+        if (p1Name) names.push(p1Name);
+        if (p2Name) names.push(p2Name);
+        if (!names.length) return 'Ambos jugadores';
+        if (names.length === 1) return names[0];
+        return `${names[0]} y ${names[1]}`;
+    }
+
+    function showOnlineResultScreen(victory) {
+        const context = ensureOnlineResultContext();
+        if (context) {
+            context.victory = victory === undefined ? context.victory : !!victory;
+            context.completed = true;
+            context.difficulty = state.difficulty || context.difficulty;
+        }
+        if (typeof window !== 'undefined') {
+            window.onlineMatchActive = false;
+        }
+        const players = (context && context.players) ? context.players : clonePlayers(state.players);
+        const pairLabel = composePairLabel(players);
+        const defeatLabel = (pairLabel && pairLabel.indexOf(' y ') !== -1) ? pairLabel : 'Ambos jugadores';
+        const start = startScreen;
+        const difficulty = difficultyScreen;
+        const lobby = lobbyScreen;
+        const win = document.getElementById('win-screen');
+        const lose = document.getElementById('lose-screen');
+        const winTitle = win ? win.querySelector('h2') : null;
+        const loseTitle = lose ? lose.querySelector('h2') : null;
+        const loseHint = lose ? lose.querySelector('small') : null;
+        if (start) hide(start);
+        if (difficulty) hide(difficulty);
+        if (lobby) hide(lobby);
+        if (winTitle && !winTitle.dataset.defaultText) {
+            winTitle.dataset.defaultText = winTitle.textContent || '';
+        }
+        if (loseTitle && !loseTitle.dataset.defaultText) {
+            loseTitle.dataset.defaultText = loseTitle.textContent || '';
+        }
+        if (loseHint && !loseHint.dataset.defaultText) {
+            loseHint.dataset.defaultText = loseHint.textContent || '';
+        }
+        if (victory) {
+            if (lose) hide(lose);
+            if (win) {
+                if (winTitle) {
+                    winTitle.textContent = '¡Victoria para ambos jugadores!';
+                }
+                const details = document.getElementById('win-details');
+                if (details && !details.innerHTML.trim()) {
+                    const teamLabel = pairLabel && pairLabel.trim() ? pairLabel : 'Ambos jugadores';
+                    details.innerHTML = `<div><strong>Modo:</strong> Online</div>` +
+                        `<div><strong>Equipo:</strong> ${teamLabel}</div>`;
+                }
+                show(win);
+            }
+        } else {
+            if (win) hide(win);
+            if (lose) {
+                if (loseTitle) {
+                    loseTitle.textContent = 'Ambos jugadores han sido derrotados';
+                }
+                if (loseHint) {
+                    loseHint.textContent = `${defeatLabel} fueron derrotados. Pulsa continuar para volver al lobby online.`;
+                }
+                show(lose);
+            }
+        }
+    }
+
+    function returnToLobbyFromResult() {
+        restoreResultMessages();
+        const win = document.getElementById('win-screen');
+        const lose = document.getElementById('lose-screen');
+        hide(win);
+        hide(lose);
+        hide(startScreen);
+        hide(onlineScreen);
+        if (difficultyScreen) hide(difficultyScreen);
+        if (lobbyScreen) show(lobbyScreen);
+        resetReadyFlags();
+        applyStateToUI();
+        updateReadyButtons();
+        updatePlayButtonState();
+        if (readyHint) readyHint.textContent = 'Ambos jugadores deben elegir nombre, un color distinto y marcarse como listos.';
+        if (state.role === 'host') {
+            sendToPeer({ type: 'READY_SYNC', player: 'p1', ready: false });
+            sendToPeer({ type: 'READY_SYNC', player: 'p2', ready: false });
+        } else if (state.role === 'guest') {
+            sendToPeer({ type: 'READY_UPDATE', player: 'p2', ready: false });
+        }
+        if (statusLabel && state.role === 'host') {
+            setStatus('Configura una nueva partida para volver a jugar.', null);
+        }
+    }
+
+    const joinRoomId = (function(){
+        try {
+            const params = new URLSearchParams(window.location.search || '');
+            return params.get('room');
+        } catch (e) {
+            return null;
+        }
+    })();
+
+    function resetState() {
+        state.role = null;
+        state.roomId = null;
+        state.hostPeerId = null;
+        state.connected = false;
+        state.players = {
+            p1: { name: '', color: null },
+            p2: { name: '', color: null }
+        };
+        state.ready = { p1: false, p2: false };
+        state.difficulty = 'recluta';
+        state.inGame = false;
+        state.guestLocalRender = false;
+        stopFrameBroadcast();
+        if (typeof window !== 'undefined') {
+            window.onlineMatchActive = false;
+        }
+        restoreResultMessages();
+    }
+
+    function generateRoomId() {
+        return Math.random().toString(36).substr(2, 8);
+    }
+
+    function updateShareLink() {
+        if (!shareInput) return;
+        shareInput.value = state.roomId || '';
+    }
+
+    function setStatus(message, tone) {
+        if (!statusLabel) return;
+        statusLabel.textContent = message || '';
+        if (tone === 'error') {
+            statusLabel.style.color = '#b71c1c';
+        } else if (tone === 'success') {
+            statusLabel.style.color = '#1b5e20';
+        } else {
+            statusLabel.style.color = '#444';
+        }
+    }
+
+    function show(element, display = 'flex') {
+        if (element) element.style.display = display;
+    }
+
+    function hide(element) {
+        if (element) element.style.display = 'none';
+    }
+
+    function showOnlineActions() {
+        if (onlineActions) onlineActions.style.display = 'flex';
+        if (shareBox) hide(shareBox);
+        if (joinCodeInput) joinCodeInput.value = '';
+    }
+
+    function hideOnlineActions() {
+        if (onlineActions) onlineActions.style.display = 'none';
+    }
+
+    function goToOnlineScreen() {
+        if (startScreen) hide(startScreen);
+        if (difficultyScreen) hide(difficultyScreen);
+        if (onlineScreen) show(onlineScreen);
+        showOnlineActions();
+    }
+
+    function goToLobby() {
+        if (onlineScreen) hide(onlineScreen);
+        if (lobbyScreen) show(lobbyScreen);
+        applyStateToUI();
+        updateReadyButtons();
+        updatePlayButtonState();
+    }
+
+    function leaveToStart() {
+        hide(onlineScreen);
+        hide(lobbyScreen);
+        if (startScreen) show(startScreen);
+        setStatus('');
+    }
+
+    function selectColorButton(player, color) {
+        const buttons = colorButtons[player] || [];
+        buttons.forEach(btn => {
+            if (!btn) return;
+            btn.style.outline = (btn.dataset.color === color) ? '3px solid #000' : 'none';
+        });
+    }
+
+    function updateColorLocks() {
+        const c1 = state.players.p1.color;
+        const c2 = state.players.p2.color;
+        colorButtons.p1.forEach(btn => {
+            const conflict = !!(c2 && btn.dataset.color === c2);
+            const locked = (state.role !== 'host');
+            btn.disabled = locked || conflict;
+            btn.style.opacity = btn.disabled ? '0.5' : '1';
+        });
+        colorButtons.p2.forEach(btn => {
+            if (state.role === 'host') {
+                btn.disabled = true;
+            } else {
+                const conflict = !!(c1 && btn.dataset.color === c1);
+                btn.disabled = conflict;
+            }
+            btn.style.opacity = btn.disabled ? '0.5' : '1';
+        });
+    }
+
+    function applyStateToUI() {
+        state.suppressUI = true;
+        try {
+            if (nameInputs.p1) {
+                nameInputs.p1.value = state.players.p1.name || '';
+                nameInputs.p1.disabled = (state.role !== 'host');
+            }
+            if (nameInputs.p2) {
+                nameInputs.p2.value = state.players.p2.name || '';
+                nameInputs.p2.disabled = (state.role !== 'guest' || !state.connected);
+            }
+            selectColorButton('p1', state.players.p1.color);
+            selectColorButton('p2', state.players.p2.color);
+            if (difficultySelect) {
+                difficultySelect.value = state.difficulty;
+                difficultySelect.disabled = (state.role !== 'host');
+            }
+            if (connectionBanner) {
+                if (state.connected) {
+                    show(connectionBanner, 'block');
+                    hide(connectionWarning);
+                } else {
+                    hide(connectionBanner);
+                    show(connectionWarning, 'block');
+                }
+            }
+        } finally {
+            state.suppressUI = false;
+        }
+        updateColorLocks();
+    }
+
+    function updateReadyButtons() {
+        ['p1', 'p2'].forEach(player => {
+            const btn = readyButtons[player];
+            if (!btn) return;
+            const ready = !!state.ready[player];
+            btn.textContent = ready ? 'Listo' : 'No listo';
+            btn.style.background = ready ? '#1b5e20' : '#d32f2f';
+            btn.disabled = (player === 'p1' && state.role !== 'host') || (player === 'p2' && state.role !== 'guest');
+            if (player === 'p2' && state.role === 'guest' && !state.connected) {
+                btn.disabled = true;
+            }
+        });
+    }
+
+    function namesAndColorsReady() {
+        const n1 = !!(state.players.p1.name && state.players.p1.name.trim());
+        const n2 = !!(state.players.p2.name && state.players.p2.name.trim());
+        const c1 = !!state.players.p1.color;
+        const c2 = !!state.players.p2.color;
+        return n1 && n2 && c1 && c2 && state.players.p1.color !== state.players.p2.color;
+    }
+
+    function updatePlayButtonState() {
+        if (!btnPlay) return;
+        const bothReady = state.ready.p1 && state.ready.p2;
+        const ok = state.connected && bothReady && namesAndColorsReady();
+        btnPlay.disabled = !ok;
+    }
+
+    function sendToPeer(payload) {
+        try {
+            if (state.conn && state.conn.open) {
+                state.conn.send(payload);
+            }
+        } catch (e) {}
+    }
+
+    function sendSessionState() {
+        if (state.role !== 'host') return;
+        sendToPeer({
+            type: 'SESSION_STATE',
+            players: state.players,
+            ready: state.ready,
+            difficulty: state.difficulty
+        });
+    }
+
+    function getPeerOptions() {
+        const isHttps = window.location.protocol === 'https:';
+        return {
+            host: window.location.hostname,
+            port: window.location.port || (isHttps ? 443 : 80),
+            path: '/peerjs',
+            secure: isHttps,
+            debug: 1
+        };
+    }
+
+    function startPeerHost() {
+        if (!PeerClass) {
+            setStatus('PeerJS no está disponible. Revisa tu conexión.', 'error');
+            return;
+        }
+        state.peer = new PeerClass(`tank1990-${state.roomId}-host`, getPeerOptions());
+        state.peer.on('open', () => {
+            setStatus('Enlace listo. Esperando a que el segundo jugador se conecte.');
+        });
+        state.peer.on('connection', conn => {
+            if (state.conn && state.conn.open) {
+                conn.close();
+                return;
+            }
+            attachConnection(conn);
+        });
+        state.peer.on('error', err => {
+            setStatus(`Error de conexión: ${err && err.message ? err.message : err}`, 'error');
+        });
+    }
+
+    function startPeerGuest() {
+        if (!PeerClass) {
+            setStatus('PeerJS no está disponible. Revisa tu conexión.', 'error');
+            return;
+        }
+        state.peer = new PeerClass(undefined, getPeerOptions());
+        state.peer.on('open', () => {
+            setStatus('Conectando con el anfitrión...');
+            const conn = state.peer.connect(`tank1990-${state.roomId}-host`, { reliable: true });
+            conn.on('error', err => {
+                setStatus(`No se pudo conectar: ${err && err.message ? err.message : err}`, 'error');
+            });
+            attachConnection(conn);
+        });
+        state.peer.on('error', err => {
+            setStatus(`Error de Peer: ${err && err.message ? err.message : err}`, 'error');
+        });
+    }
+
+    function attachConnection(conn) {
+        state.conn = conn;
+        conn.on('open', () => {
+            state.connected = true;
+            if (state.role === 'host') {
+                setStatus('Jugador 2 conectado. Entrando al lobby...', 'success');
+                sendSessionState();
+            } else {
+                setStatus('Conectado. Configura tu nombre, color y marca listo.', 'success');
+                sendToPeer({ type: 'HELLO' });
+            }
+            goToLobby();
+        });
+        conn.on('data', handlePeerMessage);
+        conn.on('close', () => {
+            state.connected = false;
+            updateReadyButtons();
+            updatePlayButtonState();
+            applyStateToUI();
+            if (state.role === 'host') {
+                stopFrameBroadcast();
+            }
+            if (!state.inGame) {
+                setStatus('La conexión se cerró. Esperando reconexión...', 'error');
+            } else {
+                setStatus('El jugador remoto se desconectó.', 'error');
+            }
+        });
+        conn.on('error', err => {
+            setStatus(`Error del canal: ${err && err.message ? err.message : err}`, 'error');
+        });
+    }
+
+    function handlePeerMessage(message) {
+        if (!message || typeof message !== 'object') return;
+        switch (message.type) {
+            case 'HELLO':
+                state.connected = true;
+                applyStateToUI();
+                updateReadyButtons();
+                updatePlayButtonState();
+                sendSessionState();
+                break;
+            case 'SESSION_STATE':
+                if (state.role === 'guest') {
+                    state.players = message.players || state.players;
+                    state.ready = message.ready || state.ready;
+                    state.difficulty = message.difficulty || state.difficulty;
+                    applyStateToUI();
+                    updateReadyButtons();
+                    updatePlayButtonState();
+                }
+                break;
+            case 'PLAYER_UPDATE':
+                if (state.role === 'host' && message.player && state.players[message.player]) {
+                    if (message.data && typeof message.data === 'object') {
+                        if ('name' in message.data) state.players[message.player].name = message.data.name || '';
+                        if ('color' in message.data) state.players[message.player].color = message.data.color || null;
+                    }
+                    applyStateToUI();
+                    updatePlayButtonState();
+                    sendToPeer({ type: 'PLAYER_SYNC', player: message.player, data: state.players[message.player] });
+                }
+                break;
+            case 'PLAYER_SYNC':
+                if (message.player && state.players[message.player]) {
+                    if (message.data && typeof message.data === 'object') {
+                        if ('name' in message.data) state.players[message.player].name = message.data.name || '';
+                        if ('color' in message.data) state.players[message.player].color = message.data.color || null;
+                    }
+                    applyStateToUI();
+                    updatePlayButtonState();
+                }
+                break;
+            case 'READY_UPDATE':
+                if (state.role === 'host' && message.player && message.player in state.ready) {
+                    state.ready[message.player] = !!message.ready;
+                    applyStateToUI();
+                    updateReadyButtons();
+                    updatePlayButtonState();
+                    sendToPeer({ type: 'READY_SYNC', player: message.player, ready: state.ready[message.player] });
+                }
+                break;
+            case 'READY_SYNC':
+                if (message.player && message.player in state.ready) {
+                    state.ready[message.player] = !!message.ready;
+                    updateReadyButtons();
+                    updatePlayButtonState();
+                }
+                break;
+            case 'DIFFICULTY_UPDATE':
+                if (state.role === 'guest') {
+                    state.difficulty = message.difficulty || state.difficulty;
+                    applyStateToUI();
+                }
+                break;
+            case 'REQUEST_START':
+                if (state.role === 'host') {
+                    // No dependas solo del estado del botón. Verifica condiciones reales.
+                    const ok = state.connected && state.ready.p1 && state.ready.p2 && namesAndColorsReady();
+                    if (ok) {
+                        startOnlineMatch();
+                    } else {
+                        setStatus('Esperando que ambos jugadores estén listos...', null);
+                    }
+                }
+                break;
+            case 'GAME_START':
+                if (state.role === 'guest') {
+                    state.players = message.players || state.players;
+                    state.difficulty = message.difficulty || state.difficulty;
+                    enterGuestMatch();
+                }
+                break;
+            case 'FRAME':
+                if (state.role === 'guest' && message.data) {
+                    if (!state.guestLocalRender) renderRemoteFrame(message);
+                }
+                break;
+            case 'GAME_ENDED':
+                if (state.role === 'guest') {
+                    const victory = !!message.victory;
+                    exitGuestMatch({ redirect: false });
+                    if (typeof window !== 'undefined') {
+                        const context = ensureOnlineResultContext();
+                        if (context) {
+                            const srcPlayers = message.players || state.players;
+                            context.players = clonePlayers(srcPlayers);
+                            context.victory = victory;
+                            context.completed = true;
+                            context.difficulty = message.difficulty || state.difficulty || context.difficulty;
+                        }
+                    }
+                    try {
+                        if (typeof window !== 'undefined' && typeof window.showOnlineResultScreen === 'function') {
+                            window.showOnlineResultScreen(victory);
+                        }
+                    } catch (e) {}
+                    setStatus('La partida terminó.', 'success');
+                }
+                break;
+            case 'KEY':
+                if (state.role === 'host' && state.inGame && message.code) {
+                    if (!window.myGameArea) return;
+                    if (!window.myGameArea.keys) window.myGameArea.keys = [];
+                    const mappedCode = (message.code in ONLINE_KEY_MAP) ? ONLINE_KEY_MAP[message.code] : message.code;
+                    window.myGameArea.keys[mappedCode] = !!message.down;
+                    if (message.code !== mappedCode) {
+                        window.myGameArea.keys[message.code] = false;
+                    }
+                }
+                break;
+            case 'RESET_KEYS':
+                if (state.role === 'host' && window.myGameArea && window.myGameArea.keys) {
+                    ONLINE_KEYS.forEach(code => {
+                        const mapped = (code in ONLINE_KEY_MAP) ? ONLINE_KEY_MAP[code] : code;
+                        window.myGameArea.keys[mapped] = false;
+                        window.myGameArea.keys[code] = false;
+                    });
+                }
+                break;
+            case 'GOODBYE':
+                if (state.role === 'guest') {
+                    setStatus('El anfitrión cerró la sala.', 'error');
+                    cleanupSession(false);
+                    leaveToStart();
+                }
+                break;
+        }
+    }
+
+    function cleanupSession(notifyPeer) {
+        if (notifyPeer && state.role === 'host') {
+            sendToPeer({ type: 'GOODBYE' });
+        }
+        stopFrameBroadcast();
+        state.frameBuffer = null;
+        state.lastFrameSignature = null;
+        state.lastFrameSentAt = 0;
+        if (state.conn) {
+            try { state.conn.close(); } catch (e) {}
+        }
+        state.conn = null;
+        if (state.peer) {
+            try { state.peer.destroy(); } catch (e) {}
+        }
+        state.peer = null;
+        if (state.viewer && state.viewer.container && state.viewer.container.parentNode) {
+            state.viewer.container.parentNode.removeChild(state.viewer.container);
+        }
+        state.viewer = null;
+        state.inGame = false;
+        state.guestLocalRender = false;
+        if (readyHint) readyHint.textContent = 'Ambos jugadores deben elegir nombre, un color distinto y marcarse como listos.';
+        try {
+            if (typeof window !== 'undefined') {
+                delete window.onlinePlayers;
+                delete window.playerTint;
+                try { window.controlsSwap = false; } catch (e) {}
+                try { window.guestMode = false; } catch (e) {}
+                delete window.player1;
+                delete window.player2;
+            }
+        } catch (e) {}
+        resetState();
+        applyStateToUI();
+        updateReadyButtons();
+        updatePlayButtonState();
+        showOnlineActions();
+        hide(shareBox);
+        if (statusLabel) setStatus('', null);
+    }
+
+    function stopFrameBroadcast() {
+        if (state.frameTimer) {
+            clearInterval(state.frameTimer);
+            state.frameTimer = null;
+        }
+        state.frameBuffer = null;
+        state.lastFrameSignature = null;
+        state.lastFrameSentAt = 0;
+    }
+
+    function prepareFrameCanvas(sourceCanvas) {
+        try {
+            if (!sourceCanvas || !sourceCanvas.width || !sourceCanvas.height) return sourceCanvas;
+            const maxWidth = 360;
+            const maxHeight = 280;
+            const scale = Math.min(1, maxWidth / sourceCanvas.width, maxHeight / sourceCanvas.height);
+            if (scale >= 1) {
+                return sourceCanvas;
+            }
+            if (!state.frameBuffer) {
+                const canvas = document.createElement('canvas');
+                state.frameBuffer = { canvas, ctx: canvas.getContext('2d') };
+            }
+            const buffer = state.frameBuffer;
+            const targetWidth = Math.max(1, Math.round(sourceCanvas.width * scale));
+            const targetHeight = Math.max(1, Math.round(sourceCanvas.height * scale));
+            if (buffer.canvas.width !== targetWidth || buffer.canvas.height !== targetHeight) {
+                buffer.canvas.width = targetWidth;
+                buffer.canvas.height = targetHeight;
+            } else {
+                buffer.ctx.clearRect(0, 0, buffer.canvas.width, buffer.canvas.height);
+            }
+            buffer.ctx.imageSmoothingEnabled = false;
+            buffer.ctx.drawImage(sourceCanvas, 0, 0, sourceCanvas.width, sourceCanvas.height, 0, 0, targetWidth, targetHeight);
+            return buffer.canvas;
+        } catch (e) {
+            return sourceCanvas;
+        }
+    }
+
+    function encodeFrameData(canvas) {
+        if (!canvas) return null;
+        const tryEncode = (type, quality) => {
+            try {
+                if (quality !== undefined) {
+                    return canvas.toDataURL(type, quality);
+                }
+                return canvas.toDataURL(type);
+            } catch (e) {
+                return null;
+            }
+        };
+        let dataUri = tryEncode('image/jpeg', 0.55);
+        if (!dataUri || dataUri.indexOf('data:image/') !== 0) {
+            dataUri = tryEncode('image/webp', 0.5);
+        }
+        if (!dataUri || dataUri.indexOf('data:image/') !== 0) {
+            dataUri = tryEncode('image/png');
+        }
+        if (!dataUri || dataUri.indexOf('data:image/') !== 0 || dataUri.length < 64) {
+            return null;
+        }
+        return dataUri;
+    }
+
+    function startFrameBroadcast() {
+        stopFrameBroadcast();
+        const pushFrame = () => {
+            try {
+                if (!state.conn || !state.conn.open) return;
+                if (!window.myGameArea || !window.myGameArea.canvas) return;
+                const canvas = window.myGameArea.canvas;
+                const sendCanvas = prepareFrameCanvas(canvas) || canvas;
+                const dataUri = encodeFrameData(sendCanvas);
+                if (!dataUri) return;
+                const signature = dataUri.length + ':' + dataUri.slice(0, 80);
+                const now = Date.now();
+                if (state.lastFrameSignature === signature && (now - state.lastFrameSentAt) < 500) {
+                    return;
+                }
+                state.lastFrameSignature = signature;
+                state.lastFrameSentAt = now;
+                const payload = { type: 'FRAME', data: dataUri, width: sendCanvas.width, height: sendCanvas.height };
+                sendToPeer(payload);
+            } catch (e) {}
+        };
+        // Empujar un par de frames iniciales rápido para "despertar" el visor
+        try { pushFrame(); } catch (e) {}
+        try { setTimeout(pushFrame, 80); } catch (e) {}
+        state.frameTimer = setInterval(pushFrame, 350);
+    }
+
+    function ensureViewer() {
+        if (state.viewer && state.viewer.container) {
+            return state.viewer;
+        }
+        const container = document.createElement('div');
+        container.id = 'online-guest-viewer';
+        container.style.position = 'fixed';
+        container.style.inset = '0';
+        container.style.background = '#111';
+        container.style.display = 'flex';
+        container.style.flexDirection = 'column';
+        container.style.alignItems = 'center';
+        container.style.justifyContent = 'center';
+        container.style.gap = '12px';
+        container.style.zIndex = '9999';
+        const title = document.createElement('h2');
+        title.textContent = 'Vista remota de la partida';
+        title.style.color = '#fafafa';
+        title.style.fontFamily = 'sans-serif';
+        title.style.margin = '0';
+        const hint = document.createElement('div');
+        hint.textContent = 'Usa las flechas para mover tu tanque y la barra espaciadora para disparar.';
+        hint.style.color = '#ddd';
+        hint.style.fontFamily = 'sans-serif';
+        const canvas = document.createElement('canvas');
+        canvas.width = typeof HUD_CANVAS_WIDTH !== 'undefined' ? HUD_CANVAS_WIDTH : 900;
+        canvas.height = typeof HUD_CANVAS_HEIGHT !== 'undefined' ? HUD_CANVAS_HEIGHT : 700;
+        canvas.style.border = '1px solid #0af';
+        canvas.style.background = '#000';
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+            ctx.imageSmoothingEnabled = false;
+        }
+        container.appendChild(title);
+        container.appendChild(hint);
+        container.appendChild(canvas);
+        document.body.appendChild(container);
+        const image = new Image();
+        try { image.decoding = 'async'; } catch (e) {}
+        try { image.crossOrigin = 'anonymous'; } catch (e) {}
+        state.viewer = { container, canvas, ctx, image, hint };
+        return state.viewer;
+    }
+
+    function renderRemoteFrame(frame) {
+        if (!frame || !frame.data) return;
+        const viewer = ensureViewer();
+        if (!viewer) return;
+        if (typeof frame.width === 'number' && typeof frame.height === 'number') {
+            if (viewer.canvas.width !== frame.width || viewer.canvas.height !== frame.height) {
+                viewer.canvas.width = frame.width;
+                viewer.canvas.height = frame.height;
+            }
+            viewer.canvas.style.width = frame.width + 'px';
+            viewer.canvas.style.height = frame.height + 'px';
+        }
+        if (viewer.container) {
+            viewer.container.style.display = 'flex';
+        }
+        if (viewer.hint) {
+            viewer.hint.textContent = 'Recibiendo imagen remota…';
+        }
+        const img = viewer.image;
+        if (!viewer.ctx && viewer.canvas && typeof viewer.canvas.getContext === 'function') {
+            viewer.ctx = viewer.canvas.getContext('2d');
+            if (viewer.ctx) viewer.ctx.imageSmoothingEnabled = false;
+        }
+        if (!viewer.ctx) {
+            return;
+        }
+        let drawn = false;
+        const drawFrame = () => {
+            if (drawn) return;
+            drawn = true;
+            try {
+                const paint = () => {
+                    try { viewer.ctx.clearRect(0, 0, viewer.canvas.width, viewer.canvas.height); } catch (e) {}
+                    viewer.ctx.drawImage(img, 0, 0, viewer.canvas.width, viewer.canvas.height);
+                    try { state.viewer.lastFrameAt = Date.now(); } catch (e) {}
+                    try { if (viewer.hint) viewer.hint.textContent = ''; } catch (e) {}
+                    try {
+                        const p1 = (state && state.players && state.players.p1) ? state.players.p1 : { name: 'Jugador 1', color: null };
+                        const p2 = (state && state.players && state.players.p2) ? state.players.p2 : { name: 'Jugador 2', color: null };
+                        viewer.ctx.save();
+                        viewer.ctx.fillStyle = 'rgba(0,0,0,0.55)';
+                        viewer.ctx.fillRect(8, 8, 260, 26);
+                        viewer.ctx.font = 'bold 16px sans-serif';
+                        viewer.ctx.fillStyle = '#fff';
+                        viewer.ctx.fillText((p2 && p2.name) ? p2.name : 'Jugador 2', 16, 26);
+                        if (p2 && p2.color) {
+                            viewer.ctx.fillStyle = p2.color;
+                            viewer.ctx.fillRect(274, 10, 18, 18);
+                            viewer.ctx.strokeStyle = '#333';
+                            viewer.ctx.strokeRect(274, 10, 18, 18);
+                        }
+                        viewer.ctx.restore();
+                        viewer.ctx.save();
+                        viewer.ctx.fillStyle = 'rgba(0,0,0,0.45)';
+                        viewer.ctx.fillRect(8, 38, 260, 22);
+                        viewer.ctx.font = 'bold 13px sans-serif';
+                        viewer.ctx.fillStyle = '#ddd';
+                        viewer.ctx.fillText((p1 && p1.name) ? p1.name : 'Jugador 1', 16, 56);
+                        if (p1 && p1.color) {
+                            viewer.ctx.fillStyle = p1.color;
+                            viewer.ctx.fillRect(274, 40, 16, 16);
+                            viewer.ctx.strokeStyle = '#333';
+                            viewer.ctx.strokeRect(274, 40, 16, 16);
+                        }
+                        viewer.ctx.restore();
+                    } catch (e) {}
+                };
+                if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+                    window.requestAnimationFrame(paint);
+                } else {
+                    paint();
+                }
+            } catch (e) {}
+        };
+        img.onload = drawFrame;
+        img.onerror = function(){
+            drawn = true;
+            try { if (viewer.hint) viewer.hint.textContent = 'Reconectando la señal de juego…'; } catch (e) {}
+        };
+        img.src = frame.data;
+        if (img && typeof img.decode === 'function') {
+            img.decode().then(drawFrame).catch(function(){});
+        }
+    }
+
+    function multiplayerTint(color) {
+        try {
+            if (typeof window !== 'undefined' && typeof window.ensureTintOpacity === 'function') {
+                return window.ensureTintOpacity(color);
+            }
+        } catch (e) {}
+        return color;
+    }
+
+    function enterGuestMatch() {
+        state.inGame = true;
+        state.guestLocalRender = false;
+        hide(startScreen);
+        hide(onlineScreen);
+        hide(lobbyScreen);
+        hide(difficultyScreen);
+        if (readyHint) readyHint.textContent = 'Partida en progreso';
+        window.onlinePlayers = state.players;
+        if (typeof window !== 'undefined') {
+            window.onlineMatchActive = true;
+            window.onlineSessionRole = 'guest';
+            const context = ensureOnlineResultContext();
+            if (context) {
+                context.players = clonePlayers(state.players);
+                context.difficulty = state.difficulty || context.difficulty;
+                context.victory = null;
+                context.completed = false;
+            }
+            window.playerTint = state.players.p2 ? multiplayerTint(state.players.p2.color) : null;
+        }
+        const viewer = ensureViewer();
+        if (viewer && viewer.container) viewer.container.style.display = 'flex';
+        if (viewer && viewer.hint) {
+            viewer.hint.textContent = 'Esperando la señal del anfitrión...';
+        }
+    }
+
+    function exitGuestMatch(options = {}) {
+        const redirect = options.redirect !== false;
+        state.inGame = false;
+        if (typeof window !== 'undefined') {
+            window.onlineMatchActive = false;
+        }
+        if (state.viewer && state.viewer.container) {
+            state.viewer.container.style.display = 'none';
+        }
+        resetReadyFlags();
+        if (redirect) {
+            returnToLobbyFromResult();
+        } else {
+            if (readyHint) readyHint.textContent = 'La partida terminó. Pulsa continuar para volver al lobby.';
+            updateReadyButtons();
+            updatePlayButtonState();
+        }
+    }
+
+    function startOnlineMatch() {
+        if (state.role !== 'host') return;
+        if (!state.connected || !namesAndColorsReady() || !state.ready.p1 || !state.ready.p2) {
+            return;
+        }
+        state.inGame = true;
+        window.onlinePlayers = {
+            p1: { name: state.players.p1.name, color: state.players.p1.color },
+            p2: { name: state.players.p2.name, color: state.players.p2.color }
+        };
+        window.playerTint = multiplayerTint(state.players.p1.color);
+        window.player1 = { name: state.players.p1.name, color: state.players.p1.color };
+        window.player2 = { name: state.players.p2.name, color: state.players.p2.color };
+        if (typeof window !== 'undefined') {
+            window.onlineMatchActive = true;
+            window.onlineSessionRole = 'host';
+            const context = ensureOnlineResultContext();
+            if (context) {
+                context.players = clonePlayers(state.players);
+                context.difficulty = state.difficulty || 'recluta';
+                context.victory = null;
+                context.completed = false;
+            }
+        }
+        try { window.localMode = null; } catch (e) {}
+        state.lastFrameSignature = null;
+        state.lastFrameSentAt = 0;
+        if (difficultyScreen) hide(difficultyScreen);
+        if (onlineScreen) hide(onlineScreen);
+        if (lobbyScreen) hide(lobbyScreen);
+        if (startScreen) hide(startScreen);
+        const difficultyKey = state.difficulty || 'recluta';
+        const starter = (typeof window !== 'undefined' && typeof window.startGame === 'function') ? window.startGame : (typeof startGame === 'function' ? startGame : null);
+        if (starter) starter(difficultyKey);
+        sendToPeer({
+            type: 'GAME_START',
+            players: window.onlinePlayers,
+            difficulty: difficultyKey
+        });
+        setStatus('Partida iniciada.', 'success');
+        startFrameBroadcast();
+    }
+
+    function handleReadyToggle(player) {
+        state.ready[player] = !state.ready[player];
+        updateReadyButtons();
+        updatePlayButtonState();
+        if (state.role === 'host') {
+            sendToPeer({ type: 'READY_SYNC', player, ready: state.ready[player] });
+        } else {
+            sendToPeer({ type: 'READY_UPDATE', player, ready: state.ready[player] });
+        }
+    }
+
+    function setupUIListeners() {
+        if (btnOnline) {
+            btnOnline.addEventListener('click', function(){
+                cleanupSession(false);
+                resetState();
+                goToOnlineScreen();
+                setStatus('Elige si deseas crear una sala o unirte con un código.');
+            });
+        }
+        if (btnOnlineCreate) {
+            btnOnlineCreate.addEventListener('click', function(){
+                cleanupSession(false);
+                resetState();
+                state.role = 'host';
+                state.roomId = generateRoomId();
+                state.hostPeerId = `tank1990-${state.roomId}-host`;
+                applyStateToUI();
+                updateReadyButtons();
+                updatePlayButtonState();
+                hideOnlineActions();
+                if (shareBox) show(shareBox, 'flex');
+                if (joinBtn) hide(joinBtn);
+                updateShareLink();
+                setStatus('Generando sala...');
+                startPeerHost();
+            });
+        }
+        if (btnOnlineJoinStart) {
+            btnOnlineJoinStart.addEventListener('click', function(){
+                const raw = joinCodeInput ? joinCodeInput.value : '';
+                const code = raw ? raw.trim().toLowerCase() : '';
+                if (!code) {
+                    setStatus('Ingresa un código válido para unirte.', 'error');
+                    return;
+                }
+                cleanupSession(false);
+                resetState();
+                state.role = 'guest';
+                state.roomId = code;
+                state.hostPeerId = `tank1990-${state.roomId}-host`;
+                applyStateToUI();
+                updateReadyButtons();
+                updatePlayButtonState();
+                hideOnlineActions();
+                if (shareBox) hide(shareBox);
+                if (joinBtn) hide(joinBtn);
+                setStatus('Preparando conexión...');
+                startPeerGuest();
+            });
+        }
+        if (btnBackOnline) {
+            btnBackOnline.addEventListener('click', function(){
+                cleanupSession(true);
+                leaveToStart();
+                if (typeof window !== 'undefined' && window.history && window.history.replaceState) {
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            });
+        }
+        if (btnBackLobby) {
+            btnBackLobby.addEventListener('click', function(){
+                cleanupSession(true);
+                leaveToStart();
+                if (typeof window !== 'undefined' && window.history && window.history.replaceState) {
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            });
+        }
+        if (copyLinkBtn) {
+            copyLinkBtn.addEventListener('click', function(){
+                if (!shareInput || !shareInput.value) return;
+                shareInput.select();
+                try {
+                    document.execCommand('copy');
+                    setStatus('Código copiado. Compártelo con tu amigo.', 'success');
+                } catch (e) {
+                    setStatus('No se pudo copiar automáticamente. Copia el código manualmente.', 'error');
+                }
+            });
+        }
+        if (difficultySelect) {
+            difficultySelect.addEventListener('change', function(){
+                if (state.role !== 'host') return;
+                state.difficulty = this.value || 'recluta';
+                sendToPeer({ type: 'DIFFICULTY_UPDATE', difficulty: state.difficulty });
+                updatePlayButtonState();
+            });
+        }
+        ['p1','p2'].forEach(player => {
+            const input = nameInputs[player];
+            if (input) {
+                input.addEventListener('input', function(){
+                    if (state.suppressUI) return;
+                    state.players[player].name = this.value;
+                    if (state.role === 'host' && player === 'p1') {
+                        sendToPeer({ type: 'PLAYER_SYNC', player, data: { name: state.players[player].name } });
+                    } else if (state.role === 'guest' && player === 'p2') {
+                        sendToPeer({ type: 'PLAYER_UPDATE', player, data: { name: state.players[player].name } });
+                    }
+                    updatePlayButtonState();
+                });
+            }
+            const btn = readyButtons[player];
+            if (btn) {
+                btn.addEventListener('click', function(){
+                    if (btn.disabled) return;
+                    handleReadyToggle(player);
+                });
+            }
+            (colorButtons[player] || []).forEach(btn => {
+                btn.addEventListener('click', function(){
+                    if (btn.disabled) return;
+                    const color = btn.dataset.color;
+                    state.players[player].color = color;
+                    selectColorButton(player, color);
+                    updateColorLocks();
+                    if (state.role === 'host' && player === 'p1') {
+                        sendToPeer({ type: 'PLAYER_SYNC', player, data: { color } });
+                    } else if (state.role === 'guest' && player === 'p2') {
+                        sendToPeer({ type: 'PLAYER_UPDATE', player, data: { color } });
+                    }
+                    updatePlayButtonState();
+                });
+            });
+        });
+        if (btnPlay) {
+            btnPlay.addEventListener('click', function(){
+                if (btnPlay.disabled) return;
+                if (state.role === 'host') {
+                    startOnlineMatch();
+                } else {
+                    // Mostrar la vista remota del anfitrión mientras se espera confirmación
+                    try { enterGuestMatch(); } catch (e) {}
+                    sendToPeer({ type: 'REQUEST_START' });
+                }
+            });
+        }
+        if (typeof window !== 'undefined') {
+            window.addEventListener('keydown', function(e){
+                if (state.role !== 'guest' || !state.inGame || state.guestLocalRender) return;
+                const code = e.keyCode || e.which;
+                if (ONLINE_KEYS.indexOf(code) === -1) return;
+                e.preventDefault();
+                sendToPeer({ type: 'KEY', code, down: true });
+            });
+            window.addEventListener('keyup', function(e){
+                if (state.role !== 'guest' || !state.inGame || state.guestLocalRender) return;
+                const code = e.keyCode || e.which;
+                if (ONLINE_KEYS.indexOf(code) === -1) return;
+                e.preventDefault();
+                sendToPeer({ type: 'KEY', code, down: false });
+            });
+            window.addEventListener('blur', function(){
+                if (state.role === 'guest' && state.inGame && !state.guestLocalRender) {
+                    sendToPeer({ type: 'RESET_KEYS' });
+                }
+            });
+        }
+    }
+
+    function bootstrapJoin() {
+        if (!joinRoomId) return;
+        cleanupSession(false);
+        resetState();
+        state.role = 'guest';
+        state.roomId = joinRoomId ? joinRoomId.toLowerCase() : joinRoomId;
+        state.hostPeerId = `tank1990-${state.roomId}-host`;
+        applyStateToUI();
+        updateReadyButtons();
+        updatePlayButtonState();
+        if (shareBox) hide(shareBox);
+        if (joinBtn) hide(joinBtn);
+        goToOnlineScreen();
+        hideOnlineActions();
+        setStatus('Preparando conexión...');
+        startPeerGuest();
+        if (typeof window !== 'undefined' && window.history && window.history.replaceState) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }
+
+    function interceptReadyUpdates() {
+        if (typeof window === 'undefined') return;
+        const originalEndGame = window.end_game || (typeof end_game === 'function' ? end_game : null);
+        if (!originalEndGame) return;
+        if (window.__onlineWrappedEndGame__) return;
+        window.end_game = function(victory) {
+            try {
+                if (state.role === 'host') {
+                    sendToPeer({
+                        type: 'GAME_ENDED',
+                        victory: !!victory,
+                        players: state.players,
+                        difficulty: state.difficulty
+                    });
+                }
+            } catch (e) {}
+            try {
+                stopFrameBroadcast();
+                state.inGame = false;
+                if (typeof window !== 'undefined') {
+                    window.onlineMatchActive = false;
+                }
+                const context = ensureOnlineResultContext();
+                if (context) {
+                    context.players = clonePlayers(state.players);
+                    context.victory = !!victory;
+                    context.completed = true;
+                    context.difficulty = state.difficulty || context.difficulty;
+                }
+                resetReadyFlags();
+                updateReadyButtons();
+                updatePlayButtonState();
+                if (readyHint) readyHint.textContent = 'La partida terminó. Usa el botón para volver al lobby.';
+                if (state.role === 'host') {
+                    sendToPeer({ type: 'READY_SYNC', player: 'p1', ready: false });
+                    sendToPeer({ type: 'READY_SYNC', player: 'p2', ready: false });
+                }
+            } catch (e) {}
+            return originalEndGame.apply(this, arguments);
+        };
+        window.__onlineWrappedEndGame__ = true;
+    }
+
+    if (typeof window !== 'undefined') {
+        window.returnToOnlineLobby = returnToLobbyFromResult;
+        window.showOnlineResultScreen = showOnlineResultScreen;
+    }
+
+    setupUIListeners();
+    interceptReadyUpdates();
+    applyStateToUI();
+    updateReadyButtons();
+    updatePlayButtonState();
+    if (joinRoomId) {
+        bootstrapJoin();
+    }
+})();
+</script>
+<script>
+// Controles del juego: Pausar / Terminar
+(function(){
+    const controls = document.getElementById('game-controls');
+    const pauseBtn = document.getElementById('btn-pause-toggle');
+    const endBtn = document.getElementById('btn-end-game');
+    const overlay = document.getElementById('pause-overlay');
+    const hint = document.getElementById('gc-hint');
+
+    function updateUI() {
+        try {
+            const paused = !!(window.myGameArea && window.myGameArea.paused);
+            if (pauseBtn) pauseBtn.textContent = paused ? 'Reanudar' : 'Pausar';
+            if (overlay) overlay.style.display = paused ? 'flex' : 'none';
+            if (hint) hint.textContent = paused ? '(Juego en pausa)' : '';
+        } catch (e) {}
+    }
+    if (pauseBtn) {
+        pauseBtn.addEventListener('click', function(){
+            try {
+                if (!window.myGameArea) return;
+                window.myGameArea.paused = !window.myGameArea.paused;
+                // Pausar/Reanudar audio de movimiento
+                try {
+                    if (window.myGameArea.paused) {
+                        if (typeof moving !== 'undefined' && moving && typeof moving.pause === 'function') moving.pause();
+                    } else {
+                        if (!window.myGameArea.gameOver && typeof moving !== 'undefined' && moving && typeof moving.play === 'function') moving.play();
+                    }
+                } catch (e) {}
+                updateUI();
+                // Notificar a la pestaña de Jugador 2 para que actualice pistas visuales si desea
+                try { if (window.myGameArea.viewerWin && !window.myGameArea.viewerWin.closed) { window.myGameArea.viewerWin.postMessage({type:'TANK1990_STATE', paused: window.myGameArea.paused}, '*'); } } catch (e) {}
+            } catch (e) {}
+        });
+    }
+    if (endBtn) {
+        endBtn.addEventListener('click', function(){
+            try {
+                if (typeof end_game === 'function') {
+                    end_game(false);
+                } else if (window.end_game) {
+                    window.end_game(false);
+                }
+            } catch (e) {}
+        });
+    }
+
+    // Exponer helpers para mostrar/ocultar controles desde lógica
+    try {
+        if (!window.__gc_ready__) {
+            window.showGameControls = function(){ if (controls) controls.style.display = 'flex'; updateUI(); };
+            window.hideGameControls = function(){ if (controls) controls.style.display = 'none'; if (overlay) overlay.style.display = 'none'; };
+            window.__gc_ready__ = true;
+        }
+    } catch (e) {}
+})();
+</script>
+</body>
+</html>
