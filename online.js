@@ -312,13 +312,20 @@ function startHostScreenSync() {
   hostScreenSyncInterval = setInterval(() => {
     if (!window.myGameArea || !window.myGameArea.canvas) return;
 
-    const frame = window.myGameArea.canvas.toDataURL("image/jpeg", 0.6);
+    const smallCanvas = document.createElement("canvas");
+smallCanvas.width = 700;
+smallCanvas.height = 700;
+
+const ctx = smallCanvas.getContext("2d");
+ctx.drawImage(window.myGameArea.canvas, 0, 0, 700, 700);
+
+const frame = smallCanvas.toDataURL("image/jpeg", 0.45);
 
     socket.emit("hostFrame", {
       roomCode: onlineRoomCode,
       frame
     });
-  }, 120);
+  }, 180);
 }
 socket.on("showEndOnlineScreen", (data) => {
   showEndOnlineScreen(data.victory);
@@ -344,7 +351,7 @@ socket.on("guestFrame", (data) => {
     img.style.width = "100vw";
     img.style.height = "100vh";
     img.style.objectFit = "contain";
-    img.style.imageRendering = "pixelated";
+    img.style.imageRendering = "auto";
 
     const waiting = document.getElementById("player2-waiting-screen");
     if (waiting) {

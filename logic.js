@@ -480,7 +480,7 @@ const myGameArea = {
         //se declara el tanque jugador, con sus estadisticas
         this.eagle = null;
         this.eagleShield = [];
-        this.jugador = new Tanque(10, 5, player, 0, BASE_CONFIG.playerStart.col * CELL_SIZE, BASE_CONFIG.playerStart.row * CELL_SIZE, "j", 0, [0, 1], 1, new Bala(100, 1, bullet, 0, 0, 0, 2, [0, 1], "j"));
+        this.jugador = new Tanque(10, 1, player, 0, BASE_CONFIG.playerStart.col * CELL_SIZE, BASE_CONFIG.playerStart.row * CELL_SIZE, "j", 0, [0, 1], 1, new Bala(100, 1, bullet, 0, 0, 0, 2, [0, 1], "j"));
         //se declaran las listas de elementos en el area de juego
         this.bloques = [];
         this.tanques = [];
@@ -607,7 +607,7 @@ const myGameArea = {
                     const c = candidatos[i];
                     if (this.radar[c[0]] && this.radar[c[0]][c[1]] === null) { sx = c[0]; sy = c[1]; break; }
                 }
-                this.jugador2 = new Tanque(10, 5, player, 0, sx * CELL_SIZE, sy * CELL_SIZE, 'j', 0, [0, -1], 1,
+                this.jugador2 = new Tanque(10, 1, player, 0, sx * CELL_SIZE, sy * CELL_SIZE, 'j', 0, [0, -1], 1,
                     new Bala(100, 1, bullet, 0, 0, 0, 2, [0, 1], 'j'));
                 if (window.player2.color) this.jugador2._tint = ensureTintOpacity(window.player2.color);
             } else if (typeof window !== 'undefined' && window.onlinePlayers && window.onlinePlayers.p1 && window.onlinePlayers.p2) {
@@ -633,7 +633,7 @@ const myGameArea = {
                     const c = candidatos[i];
                     if (this.radar[c[0]] && this.radar[c[0]][c[1]] === null) { sx = c[0]; sy = c[1]; break; }
                 }
-                this.jugador2 = new Tanque(10, 5, player, 0, sx * CELL_SIZE, sy * CELL_SIZE, 'j', 0, [0, -1], 1,
+                this.jugador2 = new Tanque(10, 1, player, 0, sx * CELL_SIZE, sy * CELL_SIZE, 'j', 0, [0, -1], 1,
                     new Bala(100, 1, bullet, 0, 0, 0, 2, [0, 1], 'j'));
                 if (p2 && p2.color) this.jugador2._tint = ensureTintOpacity(p2.color);
             }
@@ -938,11 +938,11 @@ const myGameArea = {
                     new Bala(200, 3, bullet, 0, 0, 0, 1, [0, -1], 'type3'));
                 break;
             case 'type4':
-                tank = new Tanque(8, 4, basic, 12, baseX, baseY, 'type4', 0, [0, 1], 1,
+                tank = new Tanque(8, 4, basic, 10, baseX, baseY, 'type4', 0, [0, 1], 1,
                     new Bala(600, 4, bullet, 0, 0, 0, 3, [0, 1], 'type4'));
                 break;
             case 'definitivo':
-                tank = new Tanque(12, 5, basic, 15, baseX, baseY, 'definitivo', 0, [0, 1], 1,
+                tank = new Tanque(12, 5, basic, 10, baseX, baseY, 'definitivo', 0, [0, 1], 1,
                     new Bala(700, 4, bullet, 0, 0, 0, 4, [0, 1], 'definitivo'));
                 break;
             case 'type2':
