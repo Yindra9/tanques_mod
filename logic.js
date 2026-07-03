@@ -1,5 +1,5 @@
 //se define la cantidad de pixeles por las que un tanque salta
-skip = 3;
+skip = 4;
 const CELL_SIZE = 35;
 const GRID_SIZE = 20;
 const GRID_BOUNDARY = GRID_SIZE - 1;
@@ -938,17 +938,17 @@ const myGameArea = {
                     new Bala(200, 3, bullet, 0, 0, 0, 1, [0, -1], 'type3'));
                 break;
             case 'type4':
-                tank = new Tanque(8, 4, basic, 12, baseX, baseY, 'type4', 0, [0, 1], 1,
+                tank = new Tanque(8, 3, basic, 12, baseX, baseY, 'type4', 0, [0, 1], 1,
                     new Bala(600, 4, bullet, 0, 0, 0, 3, [0, 1], 'type4'));
                 break;
             case 'definitivo':
-                tank = new Tanque(12, 5, basic, 15, baseX, baseY, 'definitivo', 0, [0, 1], 1,
+                tank = new Tanque(12, 3, basic, 15, baseX, baseY, 'definitivo', 0, [0, 1], 1,
                     new Bala(700, 4, bullet, 0, 0, 0, 4, [0, 1], 'definitivo'));
                 break;
             case 'type2':
             case 'type1':
             default:
-                tank = new Tanque(6, 5, basic, 10, baseX, baseY, entry.kind || 'type1', 0, [0, 1], 1,
+                tank = new Tanque(6, 3, basic, 10, baseX, baseY, entry.kind || 'type1', 0, [0, 1], 1,
                     new Bala(500, 4, bullet, 0, 0, 0, 2, [0, 1], entry.kind || 'type1'));
                 break;
         }
