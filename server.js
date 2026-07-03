@@ -1,5 +1,4 @@
 const express = require("express");
-const path = require("path");
 const http = require("http");
 const { Server } = require("socket.io");
 
@@ -25,12 +24,7 @@ io.on("connection", (socket) => {
 
     rooms[roomCode] = {
       hostId: socket.id,
-      players: [
-        {
-          id: socket.id,
-          playerNumber: 1
-        }
-      ]
+      players: [{ id: socket.id, playerNumber: 1 }]
     };
 
     socket.join(roomCode);
@@ -39,13 +33,10 @@ io.on("connection", (socket) => {
       roomCode,
       playerNumber: 1
     });
-
-    console.log(`Sala creada: ${roomCode}`);
   });
 
   socket.on("joinRoom", (roomCode) => {
     roomCode = String(roomCode).toUpperCase().trim();
-
     const room = rooms[roomCode];
 
     if (!room) {
@@ -58,11 +49,7 @@ io.on("connection", (socket) => {
       return;
     }
 
-    room.players.push({
-      id: socket.id,
-      playerNumber: 2
-    });
-
+    room.players.push({ id: socket.id, playerNumber: 2 });
     socket.join(roomCode);
 
     socket.emit("roomJoined", {
@@ -74,13 +61,32 @@ io.on("connection", (socket) => {
       roomCode,
       players: room.players
     });
+  });
 
-    console.log(`Jugador 2 entró a sala: ${roomCode}`);
+  socket.on("lobbyUpdate", (data) => {
+    const { roomCode, playerNumber, playerData, ready, difficulty } = data;
+    if (!roomCode || !rooms[roomCode]) return;
+
+    io.to(roomCode).emit("lobbyState", {
+      playerNumber,
+      playerData,
+      ready,
+      difficulty
+    });
+  });
+
+  socket.on("startOnlineGame", (data) => {
+    const { roomCode, players, difficulty } = data;
+    if (!roomCode || !rooms[roomCode]) return;
+
+    io.to(roomCode).emit("onlineGameStarted", {
+      players,
+      difficulty
+    });
   });
 
   socket.on("playerInput", (data) => {
     const { roomCode, input } = data;
-
     if (!roomCode || !rooms[roomCode]) return;
 
     const player = rooms[roomCode].players.find(p => p.id === socket.id);
@@ -91,29 +97,31 @@ io.on("connection", (socket) => {
       input
     });
   });
- socket.on("lobbyUpdate", (data) => {
-  const { roomCode, playerNumber, playerData, ready, difficulty } = data;
 
-  if (!roomCode || !rooms[roomCode]) return;
+  socket.on("hostFrame", (data) => {
+    const { roomCode, frame } = data;
+    if (!roomCode || !rooms[roomCode]) return;
 
-  io.to(roomCode).emit("lobbyState", {
-    playerNumber,
-    playerData,
-    ready,
-    difficulty
+    socket.to(roomCode).emit("guestFrame", {
+      frame
+    });
   });
-});
 
-socket.on("startOnlineGame", (data) => {
-  const { roomCode, players, difficulty } = data;
+  socket.on("onlineGameEnded", (data) => {
+    const { roomCode, victory } = data;
+    if (!roomCode || !rooms[roomCode]) return;
 
-  if (!roomCode || !rooms[roomCode]) return;
-
-  io.to(roomCode).emit("onlineGameStarted", {
-    players,
-    difficulty
+    io.to(roomCode).emit("showEndOnlineScreen", {
+      victory
+    });
   });
-});
+
+  socket.on("backToLobby", (data) => {
+    const { roomCode } = data;
+    if (!roomCode || !rooms[roomCode]) return;
+
+    io.to(roomCode).emit("returnToLobby");
+  });
 
   socket.on("disconnect", () => {
     console.log("Jugador desconectado:", socket.id);
@@ -125,45 +133,17 @@ socket.on("startOnlineGame", (data) => {
       if (playerIndex !== -1) {
         room.players.splice(playerIndex, 1);
 
-        io.to(roomCode).emit("playerDisconnected");
+        socket.to(roomCode).emit("playerDisconnected");
 
         if (room.players.length === 0) {
           delete rooms[roomCode];
-          console.log(`Sala eliminada: ${roomCode}`);
         }
 
         break;
       }
     }
   });
-  socket.on("hostFrame", (data) => {
-    const { roomCode, frame } = data;
-
-    if (!roomCode || !rooms[roomCode]) return;
-
-    socket.to(roomCode).emit("guestFrame", {
-      frame
-    });
-  });
-  socket.on("onlineGameEnded", (data) => {
-  const { roomCode, victory } = data;
-
-  if (!roomCode || !rooms[roomCode]) return;
-
-  io.to(roomCode).emit("showEndOnlineScreen", {
-    victory
-  });
 });
-
-socket.on("backToLobby", (data) => {
-  const { roomCode } = data;
-
-  if (!roomCode || !rooms[roomCode]) return;
-
-  io.to(roomCode).emit("returnToLobby");
-});
-});
-
 
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Servidor listo en http://localhost:${PORT}`);

@@ -14,7 +14,14 @@ let onlineReady = {
   p1: false,
   p2: false
 };
+let hostScreenSyncInterval = null;
 
+function stopHostScreenSync() {
+  if (hostScreenSyncInterval) {
+    clearInterval(hostScreenSyncInterval);
+    hostScreenSyncInterval = null;
+  }
+}
 function showElement(id, display = "flex") {
   const el = document.getElementById(id);
   if (el) el.style.display = display;
@@ -202,21 +209,7 @@ socket.on("lobbyState", (data) => {
   updateLobbyButton();
   applyPlayerPermissions();
 });
-socket.on("returnToLobby", () => {
-  const waiting = document.getElementById("player2-waiting-screen");
-  if (waiting) waiting.remove();
 
-  hideElement("win-screen");
-  hideElement("lose-screen");
-
-  onlineReady.p1 = false;
-  onlineReady.p2 = false;
-
-  showElement("online-duo-screen");
-
-  updateReadyButtons();
-  updateLobbyButton();
-});
 
 socket.on("onlineGameStarted", (data) => {
   onlinePlayers = data.players;
@@ -243,34 +236,42 @@ window.end_game = function(victory) {
   });
 };
   } else {
-     isOnlineMode = true;
-    document.body.innerHTML += `
-      <div id="player2-waiting-screen" style="
-        position: fixed;
-        inset: 0;
-        background: #111;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-family: sans-serif;
-        z-index: 9999;
-        flex-direction: column;
-        gap: 0;
-      ">
-        <h2>Jugador 2 conectado</h2>
-        <p>Esperando la sincronización de la partida...</p>
-        <p>Usa flechas para moverte y espacio para disparar.</p>
-      </div>
+  isOnlineMode = true;
+
+  let waiting = document.getElementById("player2-waiting-screen");
+
+  if (!waiting) {
+    waiting = document.createElement("div");
+    waiting.id = "player2-waiting-screen";
+    waiting.style.position = "fixed";
+    waiting.style.inset = "0";
+    waiting.style.background = "#111";
+    waiting.style.color = "white";
+    waiting.style.display = "flex";
+    waiting.style.alignItems = "center";
+    waiting.style.justifyContent = "center";
+    waiting.style.fontFamily = "sans-serif";
+    waiting.style.zIndex = "9999";
+    waiting.style.flexDirection = "column";
+    waiting.style.gap = "0";
+
+    waiting.innerHTML = `
+      <h2>Jugador 2 conectado</h2>
+      <p>Esperando la sincronización de la partida...</p>
+      <p>Usa flechas para moverte y espacio para disparar.</p>
     `;
+
+    document.body.appendChild(waiting);
   }
-});
+
+  waiting.style.display = "flex";
+}});
 
 socket.on("playerDisconnected", () => {
   alert("El otro jugador se desconectó.");
 });
 socket.on("remoteInput", (data) => {
-  if (!data || !data.input) return;
+  if (onlinePlayerNumber !== 1) return;
   if (!window.myGameArea) return;
 
   if (!window.myGameArea.keys) {
@@ -278,9 +279,18 @@ socket.on("remoteInput", (data) => {
   }
 
   const input = data.input;
+  if (!input) return;
+
+  if (input.type === "reset") {
+    [87, 83, 65, 68, 70].forEach(code => {
+      window.myGameArea.keys[code] = false;
+    });
+    return;
+  }
+
   const isDown = input.type === "keydown";
 
-  const keyMap = {
+  const map = {
     UP: 87,
     DOWN: 83,
     LEFT: 65,
@@ -288,16 +298,18 @@ socket.on("remoteInput", (data) => {
     SHOOT: 70
   };
 
-  const keyCode = keyMap[input.key];
+  const code = map[input.key];
 
-  if (keyCode) {
-    window.myGameArea.keys[keyCode] = isDown;
+  if (code) {
+    window.myGameArea.keys[code] = isDown;
   }
 });
 function startHostScreenSync() {
   if (onlinePlayerNumber !== 1) return;
 
-  setInterval(() => {
+  stopHostScreenSync();
+
+  hostScreenSyncInterval = setInterval(() => {
     if (!window.myGameArea || !window.myGameArea.canvas) return;
 
     const frame = window.myGameArea.canvas.toDataURL("image/jpeg", 0.6);
@@ -336,40 +348,30 @@ socket.on("guestFrame", (data) => {
 
     const waiting = document.getElementById("player2-waiting-screen");
     if (waiting) {
-      waiting.innerHTML = "";
+      waiting.innerHTML = `
+  <div style="
+    position: fixed;
+    top: 8px;
+    left: 12px;
+    color: white;
+    background: rgba(0,0,0,0.55);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-family: sans-serif;
+    z-index: 100000;
+  ">
+    ${onlinePlayers.p2.name || "Jugador 2"}
+  </div>
+`;
+
+waiting.appendChild(img);
       waiting.appendChild(img);
     }
   }
 
   img.src = data.frame;
 });
-socket.on("remoteInput", (data) => {
-  if (onlinePlayerNumber !== 1) return;
-  if (!window.myGameArea) return;
 
-  if (!window.myGameArea.keys) {
-    window.myGameArea.keys = [];
-  }
-
-  const input = data.input;
-  if (!input) return;
-
-  const isDown = input.type === "keydown";
-
-  const map = {
-    UP: 87,     // W
-    DOWN: 83,   // S
-    LEFT: 65,   // A
-    RIGHT: 68,  // D
-    SHOOT: 70   // F
-  };
-
-  const code = map[input.key];
-
-  if (code) {
-    window.myGameArea.keys[code] = isDown;
-  }
-});
 function sendOnlineInput(input) {
   if (!isOnlineMode || !onlineRoomCode) return;
 
@@ -490,24 +492,56 @@ function showEndOnlineScreen(victory) {
 }
 
 function returnToLobbyOnline() {
+  stopHostScreenSync();
+
   const endScreen = document.getElementById("online-end-screen");
-  if (endScreen) endScreen.style.display = "none";
+  if (endScreen) endScreen.remove();
 
   const waiting = document.getElementById("player2-waiting-screen");
   if (waiting) waiting.remove();
 
+  const img = document.getElementById("guest-frame-img");
+  if (img) img.remove();
+
+  if (window.myGameArea) {
+    try {
+      clearInterval(window.myGameArea.interval);
+      window.myGameArea.keys = [];
+      window.myGameArea.gameOver = false;
+      window.myGameArea.paused = false;
+
+      if (window.myGameArea.canvas && window.myGameArea.canvas.parentNode) {
+        window.myGameArea.canvas.remove();
+      }
+    } catch (e) {}
+  }
+
   onlineReady.p1 = false;
   onlineReady.p2 = false;
 
+  window.onlinePlayers = onlinePlayers;
+  window.player1 = onlinePlayers.p1;
+  window.player2 = onlinePlayers.p2;
+  window.localMode = null;
+
   hideElement("online-screen");
   hideElement("start-screen");
+  hideElement("win-screen");
+  hideElement("lose-screen");
+
   showElement("online-duo-screen");
 
   updateReadyButtons();
   updateLobbyButton();
   syncLobby();
 }
+window.addEventListener("blur", () => {
+  if (onlinePlayerNumber !== 2) return;
 
+  sendOnlineInput({
+    type: "reset"
+  });
+});
 
 document.addEventListener("DOMContentLoaded", () => {
   const btnOnline = document.getElementById("btn-online");

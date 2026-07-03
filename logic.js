@@ -2646,10 +2646,58 @@ function audio_init() {
     win = new Audio('Sound/win.wav');
     defeat = new Audio('Sound/defeat.wav');
 }
+//funcion que reinicia el area de juego para una nueva partida
+function resetGameAreaForNewGame() {
+    try {
+        if (myGameArea.interval) {
+            clearInterval(myGameArea.interval);
+            myGameArea.interval = null;
+        }
 
+        if (myGameArea.enemySpawnTimers) {
+            myGameArea.clearEnemySpawnTimers();
+        }
 
+        myGameArea.keys = [];
+        myGameArea.gameOver = false;
+        myGameArea.paused = false;
+
+        myGameArea.bloques = [];
+        myGameArea.tanques = [];
+        myGameArea.balas = [];
+        myGameArea.minas = [];
+        myGameArea.objs_contacto = [];
+        myGameArea.objs_distancia = [];
+        myGameArea.pendingAttackers = [];
+        myGameArea.activeAttackers = [];
+        myGameArea.bonos = [];
+        myGameArea.enemyPool = [];
+        myGameArea.radar = [];
+
+        myGameArea.eagle = null;
+        myGameArea.eagleShield = [];
+        myGameArea.jugador = null;
+        myGameArea.jugador2 = null;
+
+        myGameArea.canvas.style.display = "block";
+        myGameArea.canvas.width = HUD_CANVAS_WIDTH;
+        myGameArea.canvas.height = HUD_CANVAS_HEIGHT;
+
+        const ctx = myGameArea.canvas.getContext("2d");
+        if (ctx) {
+            ctx.clearRect(0, 0, myGameArea.canvas.width, myGameArea.canvas.height);
+        }
+
+        if (!myGameArea.canvas.parentNode) {
+            document.body.insertBefore(myGameArea.canvas, document.body.firstChild);
+        }
+    } catch (e) {
+        console.error("Error reiniciando partida:", e);
+    }
+}
 //llamada a iniciar el juego
 function startGame(selection) {
+    resetGameAreaForNewGame();
     const config = resolveDifficulty(selection);
     const lvl = config.level;
     audio_init();
