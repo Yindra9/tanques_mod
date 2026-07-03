@@ -934,11 +934,11 @@ const myGameArea = {
         const baseY = row * CELL_SIZE;
         switch (entry.kind) {
             case 'type3':
-                tank = new Tanque(1, 1, scout, 10, baseX, baseY, 'type3', 0, [0, 1], 1,
+                tank = new Tanque(1, 10, scout, 10, baseX, baseY, 'type3', 0, [0, 1], 1,
                     new Bala(200, 3, bullet, 0, 0, 0, 1, [0, -1], 'type3'));
                 break;
             case 'type4':
-                tank = new Tanque(8, 1, basic, 12, baseX, baseY, 'type4', 0, [0, 1], 1,
+                tank = new Tanque(8, 10, basic, 12, baseX, baseY, 'type4', 0, [0, 1], 1,
                     new Bala(600, 4, bullet, 0, 0, 0, 3, [0, 1], 'type4'));
                 break;
             case 'definitivo':
@@ -948,7 +948,7 @@ const myGameArea = {
             case 'type2':
             case 'type1':
             default:
-                tank = new Tanque(6, 1, basic, 10, baseX, baseY, entry.kind || 'type1', 0, [0, 1], 1,
+                tank = new Tanque(6, 10, basic, 10, baseX, baseY, entry.kind || 'type1', 0, [0, 1], 1,
                     new Bala(500, 4, bullet, 0, 0, 0, 2, [0, 1], entry.kind || 'type1'));
                 break;
         }
