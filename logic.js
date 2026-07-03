@@ -1941,13 +1941,6 @@ const myGameArea = {
         //se actualiza cada elemento, se eliminan los elementos sin vida y se reproducen sus sonidos de muerte respectivos
         for (let x = 0; x < myGameArea.updateList.length; x++) {
             for (let y = myGameArea.updateList[x].length - 1; y >= 0; y--) {
-                if (
-                    myGameArea.updateList[x] === myGameArea.tanques &&
-                    myGameArea.clock % ENEMY_SLOW_FACTOR !== 0
-                ) {
-                    continue;
-                }
-
                 myGameArea.updateList[x][y].update();
                 if (myGameArea.updateList[x][y].vida <= 0) {
                     const removed = myGameArea.updateList[x][y];
