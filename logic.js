@@ -51,7 +51,7 @@ const DISABLED_ENEMY_TYPES = {
 };
 
 const MULTIPLAYER_TINT_ALPHA = 0.5;
-
+// Asegura que un color dado tenga un valor de opacidad (alpha) válido, y lo devuelve en formato rgba(r,g,b,a).
 function ensureTintOpacity(color, alpha = MULTIPLAYER_TINT_ALPHA) {
     if (!color || typeof color !== 'string') return color;
     const trimmed = color.trim();
@@ -120,8 +120,8 @@ try {
         window.ensureTintOpacity = ensureTintOpacity;
         window.MULTIPLAYER_TINT_ALPHA = MULTIPLAYER_TINT_ALPHA;
     }
-} catch (e) {}
-
+} catch (e) {}//
+// Construye un objeto de configuración de dificultad basado en el nivel y los valores opcionales de anulación.
 function buildDifficulty(level, overrides = {}) {
     const density = Math.max(20, 100 - level * 20);
     const base = {
@@ -193,7 +193,7 @@ const DIFFICULTY_PRESETS = {
         })
     }
 };
-
+//  
 function resolveDifficulty(selection) {
     if (typeof selection === 'string') {
         const key = selection.toLowerCase();
@@ -480,7 +480,7 @@ const myGameArea = {
         //se declara el tanque jugador, con sus estadisticas
         this.eagle = null;
         this.eagleShield = [];
-        this.jugador = new Tanque(10, 3, player, 0, BASE_CONFIG.playerStart.col * CELL_SIZE, BASE_CONFIG.playerStart.row * CELL_SIZE, "j", 0, [0, 1], 1, new Bala(500, 1, bullet, 0, 0, 0, 2, [0, 1], "j"));
+        this.jugador = new Tanque(10, 3, player, 0, BASE_CONFIG.playerStart.col * CELL_SIZE, BASE_CONFIG.playerStart.row * CELL_SIZE, "j", 0, [0, 1], 1, new Bala(200, 1, bullet, 0, 0, 0, 2, [0, 1], "j"));
         //se declaran las listas de elementos en el area de juego
         this.bloques = [];
         this.tanques = [];
@@ -608,7 +608,7 @@ const myGameArea = {
                     if (this.radar[c[0]] && this.radar[c[0]][c[1]] === null) { sx = c[0]; sy = c[1]; break; }
                 }
                 this.jugador2 = new Tanque(10, 3, player, 0, sx * CELL_SIZE, sy * CELL_SIZE, 'j', 0, [0, -1], 1,
-                    new Bala(500, 1, bullet, 0, 0, 0, 2, [0, 1], 'j'));
+                    new Bala(200, 1, bullet, 0, 0, 0, 2, [0, 1], 'j'));
                 if (window.player2.color) this.jugador2._tint = ensureTintOpacity(window.player2.color);
             } else if (typeof window !== 'undefined' && window.onlinePlayers && window.onlinePlayers.p1 && window.onlinePlayers.p2) {
                 // Modo Online: dos jugadores con colores elegidos
@@ -634,7 +634,7 @@ const myGameArea = {
                     if (this.radar[c[0]] && this.radar[c[0]][c[1]] === null) { sx = c[0]; sy = c[1]; break; }
                 }
                 this.jugador2 = new Tanque(10, 3, player, 0, sx * CELL_SIZE, sy * CELL_SIZE, 'j', 0, [0, -1], 1,
-                    new Bala(500, 1, bullet, 0, 0, 0, 2, [0, 1], 'j'));
+                    new Bala(200, 1, bullet, 0, 0, 0, 2, [0, 1], 'j'));
                 if (p2 && p2.color) this.jugador2._tint = ensureTintOpacity(p2.color);
             }
         } catch (e) {}
