@@ -2366,8 +2366,8 @@ function interseccion(X1, Y1, X2, Y2) {
     return (!(X1[0] >= X2[1] || X2[0] >= X1[1]) && !(Y1[0] >= Y2[1] || Y2[0] >= Y1[1]));
 }
 
-const AI_DECISION_MIN_COOLDOWN = 2;
-const AI_DECISION_MAX_COOLDOWN = 6;
+const AI_DECISION_MIN_COOLDOWN = 20;
+const AI_DECISION_MAX_COOLDOWN = 40;
 
 function applyRandomDecisionDelay(tank, min = AI_DECISION_MIN_COOLDOWN, max = AI_DECISION_MAX_COOLDOWN) {
     if (!tank || typeof tank.aiCooldown === 'undefined') {
