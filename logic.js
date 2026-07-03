@@ -1,5 +1,6 @@
 //se define la cantidad de pixeles por las que un tanque salta
 skip = 3;
+const ENEMY_SLOW_FACTOR = 4;
 const CELL_SIZE = 35;
 const GRID_SIZE = 20;
 const GRID_BOUNDARY = GRID_SIZE - 1;
@@ -1940,7 +1941,14 @@ const myGameArea = {
         //se actualiza cada elemento, se eliminan los elementos sin vida y se reproducen sus sonidos de muerte respectivos
         for (let x = 0; x < myGameArea.updateList.length; x++) {
             for (let y = myGameArea.updateList[x].length - 1; y >= 0; y--) {
-                myGameArea.updateList[x][y].update();
+                if (
+                        myGameArea.updateList[x] === myGameArea.tanques &&
+                        myGameArea.clock % ENEMY_SLOW_FACTOR !== 0
+                    ) {
+                        continue;
+                    }
+
+                    myGameArea.updateList[x][y].update();
                 if (myGameArea.updateList[x][y].vida <= 0) {
                     const removed = myGameArea.updateList[x][y];
                     if (myGameArea.updateList[x] !== myGameArea.balas && myGameArea.updateList[x] !== myGameArea.objs_contacto && myGameArea.updateList[x] !== myGameArea.objs_distancia)
