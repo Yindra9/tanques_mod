@@ -934,21 +934,21 @@ const myGameArea = {
         const baseY = row * CELL_SIZE;
         switch (entry.kind) {
             case 'type3':
-                tank = new Tanque(1, 1, scout, 10, baseX, baseY, 'type3', 0, [0, 1], 1,
+                tank = new Tanque(1, 2, scout, 10, baseX, baseY, 'type3', 0, [0, 1], 1,
                     new Bala(200, 3, bullet, 0, 0, 0, 1, [0, -1], 'type3'));
                 break;
             case 'type4':
-                tank = new Tanque(8, 1, basic, 12, baseX, baseY, 'type4', 0, [0, 1], 1,
+                tank = new Tanque(8, 4, basic, 12, baseX, baseY, 'type4', 0, [0, 1], 1,
                     new Bala(600, 4, bullet, 0, 0, 0, 3, [0, 1], 'type4'));
                 break;
             case 'definitivo':
-                tank = new Tanque(12, 1, basic, 15, baseX, baseY, 'definitivo', 0, [0, 1], 1,
+                tank = new Tanque(12, 5, basic, 15, baseX, baseY, 'definitivo', 0, [0, 1], 1,
                     new Bala(700, 4, bullet, 0, 0, 0, 4, [0, 1], 'definitivo'));
                 break;
             case 'type2':
             case 'type1':
             default:
-                tank = new Tanque(6, 1, basic, 10, baseX, baseY, entry.kind || 'type1', 0, [0, 1], 1,
+                tank = new Tanque(6, 5, basic, 10, baseX, baseY, entry.kind || 'type1', 0, [0, 1], 1,
                     new Bala(500, 4, bullet, 0, 0, 0, 2, [0, 1], entry.kind || 'type1'));
                 break;
         }
@@ -2366,8 +2366,8 @@ function interseccion(X1, Y1, X2, Y2) {
     return (!(X1[0] >= X2[1] || X2[0] >= X1[1]) && !(Y1[0] >= Y2[1] || Y2[0] >= Y1[1]));
 }
 
-const AI_DECISION_MIN_COOLDOWN = 20;
-const AI_DECISION_MAX_COOLDOWN = 40;
+const AI_DECISION_MIN_COOLDOWN = 2;
+const AI_DECISION_MAX_COOLDOWN = 6;
 
 function applyRandomDecisionDelay(tank, min = AI_DECISION_MIN_COOLDOWN, max = AI_DECISION_MAX_COOLDOWN) {
     if (!tank || typeof tank.aiCooldown === 'undefined') {
@@ -2490,7 +2490,7 @@ function logic_elicitator() {
                 tanque.add_buffer('d');
                 applyRandomDecisionDelay(tanque);
             }
-            break;
+            break;ENEMY_SLOW_FACTOR 
         }
         if (tanque.buffer.length !== 0) {
             continue;
