@@ -1,5 +1,5 @@
 //se define la cantidad de pixeles por las que un tanque salta
-skip = 4;
+skip = 1;
 const CELL_SIZE = 35;
 const GRID_SIZE = 20;
 const GRID_BOUNDARY = GRID_SIZE - 1;
