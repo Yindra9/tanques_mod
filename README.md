@@ -45,26 +45,6 @@ Tank Game is a desktop game that combines strategy and action. Players control t
 
 ---
 
-## 📸 Screenshots
-
-### Main Menu
-
-![Main Menu](assets/menu.png)
-
-### Gameplay
-
-![Gameplay](assets/gameplay.png)
-
-### Online Mode
-
-![Online Mode](assets/online.png)
-
-### Local Multiplayer
-
-![Local Multiplayer](assets/local.png)
-
----
-
 ## 🎯 Game Modes
 
 ### 🌐 Online Mode
