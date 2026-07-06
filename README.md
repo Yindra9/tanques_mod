@@ -1,111 +1,196 @@
-# Tank Game
+# 🎮 Tank Game
 
-🎮 Multiplayer Tank Battle Game built with Python and Pygame
+A multiplayer tank battle game developed in **Python** using **Pygame** and **Socket Programming**. The game supports both **Local Multiplayer** and **Online Multiplayer**, allowing players to compete in real time through an interactive battlefield.
 
-![Python](https://img.shields.io/badge/Python-3.x-blue)
-![Pygame](https://img.shields.io/badge/Pygame-Game-green)
-![Sockets](https://img.shields.io/badge/Networking-Sockets-orange)
-![Status](https://img.shields.io/badge/Status-Completed-success)
-# Tank Game
+## 🚀 Live Demo
 
-A multiplayer tank game developed in Python featuring local and online gameplay. Players control tanks, shoot projectiles, avoid obstacles, and compete to eliminate opponents.
+🌐 **Play Online:** https://tanques-mod.onrender.com
 
-## Features
+> **Note:** Since the game is hosted on Render's free tier, the server may take a few seconds to start if it has been inactive.
 
-- Single-player and multiplayer modes
-- Local multiplayer support
-- Online multiplayer support
-- Tank movement and rotation
-- Projectile shooting system
-- Collision detection
-- Score tracking
-- Responsive game controls
-- Game over and restart system
+---
 
-## Technologies
+## 📖 Overview
+
+Tank Game is a desktop game that combines strategy and action. Players control tanks, avoid obstacles, and eliminate opponents using projectiles. The project was developed to strengthen programming skills in game development, networking, collision detection, and real-time multiplayer communication.
+
+---
+
+## ✨ Features
+
+- 🎮 Local Multiplayer mode
+- 🌐 Online Multiplayer mode
+- 🚀 Real-time gameplay
+- 🔫 Shooting mechanics
+- 💥 Collision detection
+- 🧱 Obstacles and map boundaries
+- 🏆 Victory and defeat system
+- 📊 Match history
+- ⚡ Smooth player movement
+- 🖥️ Responsive game interface
+
+---
+
+## 🛠️ Technologies Used
 
 - Python
 - Pygame
 - Socket Programming
-- JSON
+- HTML
+- CSS
+- JavaScript
+- Flask
 - Git
+- Render
 
-## Screenshots
+---
+
+## 📸 Screenshots
 
 ### Main Menu
+
 ![Main Menu](assets/menu.png)
 
 ### Gameplay
+
 ![Gameplay](assets/gameplay.png)
 
-### Multiplayer Mode
-![Multiplayer](assets/multiplayer.png)
+### Online Mode
 
-## Installation
+![Online Mode](assets/online.png)
 
-1. Clone the repository
+### Local Multiplayer
 
-```bash
-git clone https://github.com/Yindra9/TankGame.git
-```
+![Local Multiplayer](assets/local.png)
 
-2. Open the project folder
+---
 
-```bash
-cd TankGame
-```
+## 🎯 Game Modes
 
-3. Install the dependencies
+### 🌐 Online Mode
 
-```bash
-pip install pygame
-```
+Play against another player over the internet through the deployed server.
 
-4. Run the game
+### 🎮 Local Mode
 
-```bash
-python main.py
-```
+Two players can compete on the same computer using different keyboard controls.
 
-## Controls
+### 📜 Match History
+
+View previous matches and game results.
+
+---
+
+## 🎮 Controls
 
 ### Player 1
 
-- W A S D → Move
-- Space → Shoot
+| Action | Key |
+|---------|-----|
+| Move Up | W |
+| Move Down | S |
+| Move Left | A |
+| Move Right | D |
+| Shoot | Space |
 
 ### Player 2
 
-- Arrow Keys → Move
-- Enter → Shoot
+| Action | Key |
+|---------|-----|
+| Move Up | ↑ |
+| Move Down | ↓ |
+| Move Left | ← |
+| Move Right | → |
+| Shoot | Enter |
 
-## Project Structure
+---
+
+## 📂 Project Structure
 
 ```
 TankGame/
 │
 ├── assets/
-├── maps/
 ├── server/
 ├── client/
+├── static/
+├── templates/
 ├── main.py
-├── settings.py
-└── README.md
+├── requirements.txt
+├── README.md
+└── ...
 ```
 
-## Future Improvements
+---
 
-- Better online synchronization
-- Matchmaking system
-- Multiple maps
+## ⚙️ Installation
+
+Clone the repository:
+
+```bash
+git clone https://github.com/Yindra9/TankGame.git
+```
+
+Go to the project folder:
+
+```bash
+cd TankGame
+```
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Run the application:
+
+```bash
+python main.py
+```
+
+---
+
+## 🎓 Learning Outcomes
+
+This project allowed me to gain practical experience in:
+
+- Object-Oriented Programming
+- Multiplayer game development
+- Client-server communication
+- Socket programming
+- Collision detection algorithms
+- Game state synchronization
+- Version control with Git
+- Web deployment using Render
+
+---
+
+## 🔮 Future Improvements
+
+- New maps
+- AI opponents
+- Sound effects and music
 - Power-ups
-- Sound effects
-- User accounts
-- Ranking system
+- User authentication
+- Global leaderboard
+- Mobile compatibility
+- Improved matchmaking
 
-## Author
+---
+
+## 👩‍💻 Author
 
 **Yindra Pérez Vargas**
 
 Computer Engineering Student  
 Tecnológico de Costa Rica
+
+📧 Email: yindraperezvargas1@gmail.com
+
+🔗 GitHub: https://github.com/Yindra9
+
+🔗 LinkedIn: https://www.linkedin.com/in/yindra-pérez-vargas-724b08284
+
+---
+
